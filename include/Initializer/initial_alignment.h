@@ -13,7 +13,7 @@
 #include "Initializer/ImuPreintegration.h"
 #include "Initializer/feature_manager.h"
 #include <map>
-
+#include <glog/logging.h>
 #include <larvio/feature_msg.h>
 
 #include <boost/shared_ptr.hpp>

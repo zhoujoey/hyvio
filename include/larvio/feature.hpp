@@ -15,7 +15,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
-
+#include <glog/logging.h>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>

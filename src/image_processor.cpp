@@ -44,7 +44,7 @@ ImageProcessor::~ImageProcessor() {
 bool ImageProcessor::loadParameters() {
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if (!fsSettings.isOpened()) {
-        cout << "config_file error: cannot open " << config_file << endl;
+        LOG(INFO) << "config_file error: cannot open " << config_file << std::endl;
         return false;
     }
 
@@ -93,21 +93,21 @@ bool ImageProcessor::loadParameters() {
     R_cam_imu = R_imu_cam.t();
     t_cam_imu = -R_imu_cam.t() * t_imu_cam;
 
-    // cout << ".fast_threshold = " << processor_config.fast_threshold << endl;
-    // cout << ".patch_size = " << processor_config.patch_size << endl;
-    // cout << ".pyramid_levels = " << processor_config.pyramid_levels << endl;
-    // cout << ".max_iteration = " << processor_config.max_iteration << endl;
-    // cout << ".track_precision = " << processor_config.track_precision << endl;
-    // cout << ".ransac_threshold = " << processor_config.ransac_threshold << endl;
-    // cout << ".max_features_num = " << processor_config.max_features_num << endl;
-    // cout << ".min_distance = " << processor_config.min_distance << endl;
-    // cout << ".flag_equalize = " << processor_config.flag_equalize << endl;
-    // cout << ".pub_frequency = " << processor_config.pub_frequency << endl;
-    // cout << "cam_distortion_model = " << cam_distortion_model << endl;
-    // cout << "cam_intrinsics = " << cam_intrinsics << endl;
-    // cout << "cam_distortion_coeffs = " << cam_distortion_coeffs << endl;
-    // cout << "R_cam_imu = " << R_cam_imu << endl;
-    // cout << "t_cam_imu = " << t_cam_imu << endl;
+    // LOG(INFO) << ".fast_threshold = " << processor_config.fast_threshold << std::endl;
+    // LOG(INFO) << ".patch_size = " << processor_config.patch_size << std::endl;
+    // LOG(INFO) << ".pyramid_levels = " << processor_config.pyramid_levels << std::endl;
+    // LOG(INFO) << ".max_iteration = " << processor_config.max_iteration << std::endl;
+    // LOG(INFO) << ".track_precision = " << processor_config.track_precision << std::endl;
+    // LOG(INFO) << ".ransac_threshold = " << processor_config.ransac_threshold << std::endl;
+    // LOG(INFO) << ".max_features_num = " << processor_config.max_features_num << std::endl;
+    // LOG(INFO) << ".min_distance = " << processor_config.min_distance << std::endl;
+    // LOG(INFO) << ".flag_equalize = " << processor_config.flag_equalize << std::endl;
+    // LOG(INFO) << ".pub_frequency = " << processor_config.pub_frequency << std::endl;
+    // LOG(INFO) << "cam_distortion_model = " << cam_distortion_model << std::endl;
+    // LOG(INFO) << "cam_intrinsics = " << cam_intrinsics << std::endl;
+    // LOG(INFO) << "cam_distortion_coeffs = " << cam_distortion_coeffs << std::endl;
+    // LOG(INFO) << "R_cam_imu = " << R_cam_imu << std::endl;
+    // LOG(INFO) << "t_cam_imu = " << t_cam_imu << std::endl;
 
     return true;
 }
@@ -135,7 +135,7 @@ bool ImageProcessor::processImage(const ImageDataPtr& msg,
         if ((imu_msg_buffer.begin() != imu_msg_buffer.end()) && 
             (imu_msg_buffer.begin()->timeStampToSec-msg->timeStampToSec <= 0.0)) {
             bFirstImg = true;
-            printf("Images from now on will be utilized...\n\n");
+            LOG(INFO) << "Images from now on will be utilized..." << std::endl;
         }
         else
             return false;
@@ -443,7 +443,7 @@ bool ImageProcessor::initializeFirstFeatures(
     Mat prevDescriptors, currDescriptors;
     if (!prevORBDescriptor_ptr->computeDescriptors(prev_pts_inImg, levels, prevDescriptors) ||
         !currORBDescriptor_ptr->computeDescriptors(curr_pts_inImg, levels, currDescriptors)) {
-        cerr << "error happen while compute descriptors" << endl;
+        cerr << "error happen while compute descriptors" << std::endl;
         return false;
     }
     vector<int> vDis;
@@ -544,7 +544,7 @@ void ImageProcessor::trackFeatures() {
     // Abort tracking if there is no features in
     // the previous frame.
     if (0 == before_tracking) {
-        printf("No feature in prev img !\n");
+        LOG(INFO) << "No feature in prev img !" << std::endl;
         return;
     }
 
@@ -602,7 +602,7 @@ void ImageProcessor::trackFeatures() {
 
     // debug log
     if (0 == after_tracking) {
-        printf("No feature is tracked !");
+        LOG(INFO) << "No feature is tracked !" << std::endl;
         vector<Point2f>().swap(prev_pts_);
         vector<Point2f>().swap(curr_pts_);
         vector<FeatureIDType>().swap(pts_ids_);
@@ -663,7 +663,7 @@ void ImageProcessor::trackFeatures() {
     after_tracking = curr_inImg_points.size();
     // debug log
     if (0 == after_tracking) {
-        printf("No feature is tracked !");
+        LOG(INFO) << "No feature is tracked !" << std::endl;
         vector<Point2f>().swap(prev_pts_);
         vector<Point2f>().swap(curr_pts_);
         vector<FeatureIDType>().swap(pts_ids_);
@@ -677,7 +677,7 @@ void ImageProcessor::trackFeatures() {
     vector<int> levels(prev_inImg_points.size(), 0);
     Mat prevDescriptors, currDescriptors;
     if (!currORBDescriptor_ptr->computeDescriptors(curr_inImg_points, levels, currDescriptors)) {
-        cerr << "error happen while compute descriptors" << endl;
+        cerr << "error happen while compute descriptors" << std::endl;
         vector<Point2f>().swap(prev_pts_);
         vector<Point2f>().swap(curr_pts_);
         vector<FeatureIDType>().swap(pts_ids_);
@@ -720,7 +720,7 @@ void ImageProcessor::trackFeatures() {
 
     // Return if not enough inliers
     if ( prev_tracked_points.size()==0 ){
-        printf("No feature is tracked after descriptor matching!\n");
+        LOG(INFO) << "No feature is tracked after descriptor matching!" << std::endl;
         vector<Point2f>().swap(prev_pts_);
         vector<Point2f>().swap(curr_pts_);
         vector<FeatureIDType>().swap(pts_ids_);
@@ -781,7 +781,7 @@ void ImageProcessor::trackFeatures() {
 
     // debug log
     if (0 == after_ransac) {
-        printf("No feature survive after RANSAC !");
+        LOG(INFO) << "No feature survive after RANSAC " << std::endl;
         vector<Point2f>().swap(prev_pts_);
         vector<Point2f>().swap(curr_pts_);
         vector<FeatureIDType>().swap(pts_ids_);
@@ -814,12 +814,8 @@ void ImageProcessor::trackNewFeatures() {
     // Return if no new features
     int num_new = new_pts_.size();
     if ( num_new<=0 ) {
-        // printf("NO NEW FEATURES EXTRACTED IN LAST IMAGE");
         return;
     }
-    // else
-    //     printf("%d NEW FEATURES EXTRACTED IN LAST IMAGE",num_new);
-
     // Pridict features in current image
     vector<Point2f> curr_pts(new_pts_.size());
     predictFeatureTracking(
@@ -860,7 +856,6 @@ void ImageProcessor::trackNewFeatures() {
     // Return if no new feature was tracked
     int num_tracked = prev_pts_inImg_.size();
     if ( num_tracked<=0 ) {
-        // printf("NO NEW FEATURE IN LAST IMAGE WAS TRACKED");
         return;
     }
 
@@ -902,7 +897,6 @@ void ImageProcessor::trackNewFeatures() {
     // Return if no new feature was tracked
     num_tracked = prev_pts_inImg.size();
     if ( num_tracked<=0 ) {
-        // printf("NO NEW FEATURE IN LAST IMAGE WAS TRACKED");
         return;
     }
 
@@ -911,7 +905,7 @@ void ImageProcessor::trackNewFeatures() {
     Mat prevDescriptors, currDescriptors;
     if (!prevORBDescriptor_ptr->computeDescriptors(prev_pts_inImg, levels, prevDescriptors) ||
         !currORBDescriptor_ptr->computeDescriptors(curr_pts_inImg, levels, currDescriptors)) {
-        cerr << "error happen while compute descriptors" << endl;
+        cerr << "error happen while compute descriptors" << std::endl;
         return;
     }
     vector<int> vDis;
@@ -939,7 +933,6 @@ void ImageProcessor::trackNewFeatures() {
 
     // Return if not enough inliers
     if ( prev_pts_inlier.size()<20 ){
-        // printf("NO NEW FEATURE IN LAST IMAGE WAS TRACKED");
         return;
     }
 
@@ -982,7 +975,6 @@ void ImageProcessor::trackNewFeatures() {
     // Return if no new feature was tracked
     int num_ransac = curr_pts_matched.size();
     if ( num_ransac<=0 ) {
-        // printf("NO NEW FEATURE IN LAST IMAGE WAS TRACKED");
         return;
     }
 
@@ -1064,8 +1056,7 @@ void ImageProcessor::undistortPoints(
         cv::fisheye::undistortPoints(pts_in, pts_out, K, distortion_coeffs,
                                      rectification_matrix, K_new);
     } else {
-        printf("The model %s is unrecognized, use radtan instead...",
-                      distortion_model.c_str());
+        LOG(INFO) << "The model %s is unrecognized, use radtan instead..." << distortion_model.c_str() << std::endl;
         cv::undistortPoints(pts_in, pts_out, K, distortion_coeffs,
                             rectification_matrix, K_new);
     }

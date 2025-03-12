@@ -54,7 +54,6 @@ bool StaticInitializer::tryIncInit(const std::vector<ImuData>& imu_msg_buffer,
     if (staticImgCounter < static_Num)  // return false if number of consecitive static images does not reach @static_Num
       return false;
   } else {
-//    printf("inclinometer-initializer failed at No.%d static image.",staticImgCounter+1);
     staticImgCounter = 0;
     return false;
   }
@@ -117,7 +116,7 @@ void StaticInitializer::initializeGravityAndBias(const double& time_bound,
   velocity = Vector3d(0.0, 0.0, 0.0);
   acc_bias = Vector3d(0.0, 0.0, 0.0);
 
-  printf("Inclinometer-initializer completed by using %d imu data !!!\n\n",usefulImuSize);
+  LOG(INFO) << "Inclinometer-initializer completed by using imu data :" << usefulImuSize  << std::endl;
 
   return;
 }
@@ -126,7 +125,7 @@ void StaticInitializer::initializeGravityAndBias(const double& time_bound,
 void StaticInitializer::assignInitialState(std::vector<ImuData>& imu_msg_buffer,
         Eigen::Vector3d& m_gyro_old, Eigen::Vector3d& m_acc_old, IMUState& imu_state) {
   if (!bInit) {
-    printf("Cannot assign initial state before initialization !!!\n");
+    LOG(INFO) << "Cannot assign initial state before initialization !!!" << std::endl;
     return;
   }
 

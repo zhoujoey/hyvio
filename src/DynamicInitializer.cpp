@@ -39,7 +39,7 @@ bool DynamicInitializer::tryDynInit(const std::vector<ImuData>& imu_msg_buffer,
     processImage(img_msg);
 
     if (bInit) {
-        printf("Dynamic initialization success !\n\n");
+        LOG(INFO) << "Dynamic initialization success !" <<std::endl;
         return true;
     } else
         return false;
@@ -152,7 +152,7 @@ bool DynamicInitializer::initialStructure() {
         var = sqrt(var / ((int)all_image_frame.size() - 1));   
         if(var < 0.25)
         {
-        //    printf("IMU excitation not enough!\n");  
+           LOG(INFO) << "IMU excitation not enough!" <<std::endl; 
         }
     }
 
@@ -180,7 +180,7 @@ bool DynamicInitializer::initialStructure() {
     int l;
     if (!relativePose(relative_R, relative_T, l))      
     {
-        // printf("Not enough features or parallax; Move device around\n");
+        LOG(INFO) << "Not enough features or parallax; Move device around" <<std::endl;
         return false;
     }
     GlobalSFM sfm;
@@ -188,7 +188,7 @@ bool DynamicInitializer::initialStructure() {
               relative_R, relative_T,
               sfm_f, sfm_tracked_points))      
     {                                                 
-        // printf("global SFM failed!\n");
+        LOG(INFO) << "global SFM failed!" <<std::endl;
         marginalization_flag = MARGIN_OLD;
         return false;
     }
@@ -238,12 +238,12 @@ bool DynamicInitializer::initialStructure() {
         cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);     
         if(pts_3_vector.size() < 6)    
         {
-            // printf("Not enough points for solve pnp !\n");
+            LOG(INFO) << "Not enough points for solve pnp !" <<std::endl;
             return false; 
         }
         if (!cv::solvePnP(pts_3_vector, pts_2_vector, K, D, rvec, t, 1))
         {
-            // printf("solve pnp fail!\n");
+            LOG(INFO) << "solve pnp fail!" <<std::endl;
             return false;  
         }
         cv::Rodrigues(rvec, r);
@@ -263,7 +263,7 @@ bool DynamicInitializer::initialStructure() {
     }
     else
     {
-//        printf("misalign visual structure with IMU\n");
+       LOG(INFO) << "misalign visual structure with IMU" <<std::endl;
         return false;
     }
 }
@@ -276,7 +276,7 @@ bool DynamicInitializer::visualInitialAlign() {
     bool result = VisualIMUAlignment(all_image_frame, Bgs, g, x, TIC);  
     if(!result)
     {
-        // printf("solve g failed!\n");
+        LOG(INFO) << "solve g failed!" << std::endl;
         return false;
     }
 
@@ -349,7 +349,6 @@ bool DynamicInitializer::relativePose(Matrix3d &relative_R, Vector3d &relative_T
             if(average_parallax * 460 > 30 && m_estimator.solveRelativeRT(corres, relative_R, relative_T))
             {   
                 l = i;
-                // printf("average_parallax %f choose l %d and newest frame to triangulate the whole structure\n", average_parallax * 460, l);
                 return true;
             }
         }
@@ -443,7 +442,7 @@ void DynamicInitializer::slideWindow() {
 void DynamicInitializer::assignInitialState(std::vector<ImuData>& imu_msg_buffer,
         Eigen::Vector3d& m_gyro_old, Eigen::Vector3d& m_acc_old, IMUState& imu_state) {
     if (!bInit) {
-        printf("Cannot assign initial state before initialization !!!\n");
+        LOG(INFO) << "Cannot assign initial state before initialization !!!" << std::endl;
         return;
     }
 

@@ -15,7 +15,7 @@ using namespace std;
 
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
-
+#include <glog/logging.h>
 using namespace Eigen;
 
 

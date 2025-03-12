@@ -16,7 +16,6 @@ namespace larvio {
         SystemNodelet() { return; }
         ~SystemNodelet() {
             // debug log
-            std::cout << "in ~SystemNodelet()" << std::endl;
             return; }
 
     private:

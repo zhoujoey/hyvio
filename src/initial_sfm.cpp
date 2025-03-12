@@ -53,7 +53,7 @@ bool GlobalSFM::solveFrameByPnP(Matrix3d &R_initial, Vector3d &P_initial, int i,
 	}
 	if (int(pts_2_vector.size()) < 15)        
 	{
-		printf("unstable features tracking, please slowly move you device! or just put in on the table!\n\n");
+		LOG(INFO) << "unstable features tracking, please slowly move you device! or just put in on the table!" << std::endl;
 		if (int(pts_2_vector.size()) < 10)      
 			return false;
 	}
@@ -69,7 +69,6 @@ bool GlobalSFM::solveFrameByPnP(Matrix3d &R_initial, Vector3d &P_initial, int i,
 		return false;
 	}
 	cv::Rodrigues(rvec, r);
-	//cout << "r " << endl << r << endl;
 	MatrixXd R_pnp;
 	cv::cv2eigen(r, R_pnp);
 	MatrixXd T_pnp;
@@ -113,7 +112,7 @@ void GlobalSFM::triangulateTwoFrames(int frame0, Eigen::Matrix<double, 3, 4> &Po
 			sfm_f[j].position[0] = point_3d(0);
 			sfm_f[j].position[1] = point_3d(1);
 			sfm_f[j].position[2] = point_3d(2);
-			//cout << "trangulated : " << frame1 << "  3d point : "  << j << "  " << point_3d.transpose() << endl;
+			LOG(INFO) << "trangulated : " << frame1 << "  3d point : "  << j << "  " << point_3d.transpose() << std::endl;
 		}							  
 	}
 }
@@ -130,7 +129,7 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 			  vector<SFMFeature> &sfm_f, map<int, Vector3d> &sfm_tracked_points)
 {
 	feature_num = sfm_f.size();
-	//cout << "set 0 and " << l << " as known " << endl;
+	LOG(INFO) << "set 0 and " << l << " as known " << std::endl;
 	// have relative_r relative_t
 	// intial two view
 	q[l].w() = 1;                                          
@@ -140,8 +139,8 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 	T[l].setZero();
 	q[frame_num - 1] = q[l] * Quaterniond(relative_R);     
 	T[frame_num - 1] = relative_T;
-	//cout << "init q_l " << q[l].w() << " " << q[l].vec().transpose() << endl;
-	//cout << "init t_l " << T[l].transpose() << endl;
+	LOG(INFO) << "init q_l " << q[l].w() << " " << q[l].vec().transpose() << std::endl;
+	LOG(INFO) << "init t_l " << T[l].transpose() << std::endl;
 
 	//rotate to cam frame
 	Matrix3d c_Rotation[frame_num];               
@@ -222,7 +221,7 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 			sfm_f[j].position[0] = point_3d(0);
 			sfm_f[j].position[1] = point_3d(1);
 			sfm_f[j].position[2] = point_3d(2);
-			//cout << "trangulated : " << frame_0 << " " << frame_1 << "  3d point : "  << j << "  " << point_3d.transpose() << endl;
+			LOG(INFO) << "trangulated : " << frame_0 << " " << frame_1 << "  3d point : "  << j << "  " << point_3d.transpose() << std::endl;
 		}		
 	}
 
@@ -230,19 +229,19 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 	for (int i = 0; i < frame_num; i++)
 	{
 		q[i] = c_Rotation[i].transpose(); 
-		cout << "solvePnP  q" << " i " << i <<"  " <<q[i].w() << "  " << q[i].vec().transpose() << endl;
+		LOG(INFO) << "solvePnP  q" << " i " << i <<"  " <<q[i].w() << "  " << q[i].vec().transpose() << std::endl;
 	}
 	for (int i = 0; i < frame_num; i++)
 	{
 		Vector3d t_tmp;
 		t_tmp = -1 * (q[i] * c_Translation[i]);
-		cout << "solvePnP  t" << " i " << i <<"  " << t_tmp.x() <<"  "<< t_tmp.y() <<"  "<< t_tmp.z() << endl;
+		LOG(INFO) << "solvePnP  t" << " i " << i <<"  " << t_tmp.x() <<"  "<< t_tmp.y() <<"  "<< t_tmp.z() << std::endl;
 	}
 */
 	//full BA
 	ceres::Problem problem;
 	ceres::LocalParameterization* local_parameterization = new ceres::QuaternionParameterization();
-	//cout << " begin full BA " << endl;
+	LOG(INFO) << " begin full BA " << std::endl;
 	for (int i = 0; i < frame_num; i++)       
 	{
 		//double array for ceres
@@ -286,14 +285,14 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 	options.max_solver_time_in_seconds = 0.2;
 	ceres::Solver::Summary summary;
 	ceres::Solve(options, &problem, &summary);     
-	//std::cout << summary.BriefReport() << "\n";
+
 	if (summary.termination_type == ceres::CONVERGENCE || summary.final_cost < 5e-03)    
 	{
-		//cout << "vision only BA converge" << endl;
+		LOG(INFO) << "vision only BA converge" << std::endl;
 	}
 	else
 	{
-		//cout << "vision only BA not converge " << endl;
+		LOG(INFO) << "vision only BA not converge " << std::endl;
 		return false;
 	}
 	for (int i = 0; i < frame_num; i++)           
@@ -303,12 +302,12 @@ bool GlobalSFM::construct(int frame_num, Quaterniond* q, Vector3d* T, int l,
 		q[i].y() = c_rotation[i][2]; 
 		q[i].z() = c_rotation[i][3]; 
 		q[i] = q[i].inverse();        
-		//cout << "final  q" << " i " << i <<"  " <<q[i].w() << "  " << q[i].vec().transpose() << endl;
+		LOG(INFO) << "final  q" << " i " << i <<"  " <<q[i].w() << "  " << q[i].vec().transpose() << std::endl;
 	}
 	for (int i = 0; i < frame_num; i++)          
 	{
 		T[i] = -1 * (q[i] * Vector3d(c_translation[i][0], c_translation[i][1], c_translation[i][2]));   // qxc: 优化出来的是t_cr_c，需要转成t_rc_r
-		//cout << "final  t" << " i " << i <<"  " << T[i](0) <<"  "<< T[i](1) <<"  "<< T[i](2) << endl;
+		LOG(INFO) << "final  t" << " i " << i <<"  " << T[i](0) <<"  "<< T[i](1) <<"  "<< T[i](2) << std::endl;
 	}
 	for (int i = 0; i < (int)sfm_f.size(); i++)   
 	{

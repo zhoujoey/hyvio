@@ -13,7 +13,7 @@
 
 #include <cmath>
 #include <Eigen/Dense>
-
+#include <glog/logging.h>
 namespace larvio {
 
 /*

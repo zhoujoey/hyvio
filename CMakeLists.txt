@@ -66,7 +66,7 @@ add_library(image_processor
     src/image_processor.cpp
     src/ORBDescriptor.cpp
 )
-target_link_libraries(image_processor
+target_link_libraries(image_processor glog
     ${OpenCV_LIBRARIES}
 )
 
@@ -75,7 +75,7 @@ target_link_libraries(image_processor
 add_library(staticInitializer
     src/StaticInitializer.cpp
 )
-target_link_libraries(staticInitializer
+target_link_libraries(staticInitializer glog
     ${SUITESPARSE_LIBRARIES}
 )
 # -- Dynamic Initializer
@@ -87,7 +87,7 @@ add_library(dynamicInitializer
     src/initial_sfm.cpp
     src/solve_5pts.cpp
 )
-target_link_libraries(dynamicInitializer
+target_link_libraries(dynamicInitializer glog
     ${SUITESPARSE_LIBRARIES}
     ${CERES_LIBRARIES}
     ${OpenCV_LIBRARIES}
@@ -96,7 +96,7 @@ target_link_libraries(dynamicInitializer
 add_library(flexibleInitializer
     src/FlexibleInitializer.cpp
 )
-target_link_libraries(flexibleInitializer
+target_link_libraries(flexibleInitializer glog
     staticInitializer
     dynamicInitializer
 )
@@ -105,7 +105,7 @@ target_link_libraries(flexibleInitializer
 add_library(estimator
     src/larvio.cpp
 )
-target_link_libraries(estimator
+target_link_libraries(estimator glog
     flexibleInitializer
     ${SUITESPARSE_LIBRARIES}
     ${OpenCV_LIBRARIES}
@@ -122,7 +122,7 @@ add_dependencies(system_manager
     ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(system_manager
+target_link_libraries(system_manager glog
     image_processor estimator
     ${catkin_LIBRARIES}
 )
@@ -135,7 +135,7 @@ add_dependencies(system_manager_nodelet
     ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(system_manager_nodelet
+target_link_libraries(system_manager_nodelet glog
     system_manager
     ${catkin_LIBRARIES}
 )

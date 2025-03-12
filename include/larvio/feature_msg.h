@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-
+#include <glog/logging.h>
 namespace larvio {
 
     // Measurement for one features

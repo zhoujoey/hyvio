@@ -18,7 +18,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <boost/shared_ptr.hpp>
-
+#include <glog/logging.h>
 #include "imu_state.h"
 #include "feature.hpp"
 #include <larvio/feature_msg.h>

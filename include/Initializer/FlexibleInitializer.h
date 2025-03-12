@@ -11,7 +11,7 @@
 
 #include "Initializer/StaticInitializer.h"
 #include "Initializer/DynamicInitializer.h"
-
+#include <glog/logging.h>
 #include "sensors/ImuData.hpp"
 
 using namespace std;

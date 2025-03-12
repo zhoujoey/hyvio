@@ -390,7 +390,7 @@ bool ORBdescriptor::computeDescriptors(const vector<cv::Point2f>& pts,
         0==mvLayerScale.size() ||
         mImagePyramid.empty() ||
         mBluredImagePyramid.empty()) {
-        cout << "In ORBdescriptor::computeDescriptors(): Should have call ORBdescriptor::initializeLayerAndPyramid before calling this !" << endl;
+        LOG(INFO) << "In ORBdescriptor::computeDescriptors(): Should have call ORBdescriptor::initializeLayerAndPyramid before calling this !" << std::endl;
         return false;
     }
 

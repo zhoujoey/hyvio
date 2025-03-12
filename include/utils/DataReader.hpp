@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-
+#include <glog/logging.h>
 #include "sensors/ImuData.hpp"
 
 using namespace std;

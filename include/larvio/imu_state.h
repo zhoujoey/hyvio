@@ -16,7 +16,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-
+#include <glog/logging.h>
 #define GRAVITY_ACCELERATION 9.81
 
 namespace larvio {

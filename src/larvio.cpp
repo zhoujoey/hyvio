@@ -58,7 +58,7 @@ LarVio::~LarVio() {
 bool LarVio::loadParameters() {
   cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
   if (!fsSettings.isOpened()) {
-      cout << "config_file error: cannot open " << config_file << endl;
+      LOG(INFO) << "config_file error: cannot open " << config_file << std::endl;
       return false;
   }
 
@@ -269,7 +269,7 @@ bool LarVio::loadParameters() {
   feature_idp_dim = fsSettings["feature_idp_dim"];
   if (feature_idp_dim!=1 &&
     feature_idp_dim!=3) {
-      cout << "Unknown type of feature idp type! Set as 3d idp." << endl;
+      LOG(INFO) << "Unknown type of feature idp type! Set as 3d idp." << std::endl;
       feature_idp_dim = 3;
   }
 
@@ -277,35 +277,35 @@ bool LarVio::loadParameters() {
   use_schmidt = (static_cast<int>(fsSettings["use_schmidt"]) ? true : false);
 
   // Print VIO setup
-  cout << endl << "===========================================" << endl;
+  LOG(INFO) << "===========================================" << std::endl;
   if (if_FEJ_config)
-      cout << "using FEJ..." << endl;
+      LOG(INFO) << "using FEJ..." << std::endl;
   else
-      cout << "not using FEJ..." << endl;
+      LOG(INFO) << "not using FEJ..." << std::endl;
   if (estimate_td)
-      cout << "estimating td... initial td = " << state_server.td << endl;
+      LOG(INFO) << "estimating td... initial td = " << state_server.td << std::endl;
   else
-      cout << "not estimating td..." << endl;
+      LOG(INFO) << "not estimating td..." << std::endl;
   if (estimate_extrin)
-      cout << "estimating extrinsic..." << endl;
+      LOG(INFO) << "estimating extrinsic..." << std::endl;
   else
-      cout << "not estimating extrinsic..." << endl;
+      LOG(INFO) << "not estimating extrinsic..." << std::endl;
   if (calib_imu)
-      cout << "calibrating imu instrinsic online..." << endl;
+      LOG(INFO) << "calibrating imu instrinsic online..." << std::endl;
   else
-      cout << "not calibrating imu instrinsic online..." << endl;
+      LOG(INFO) << "not calibrating imu instrinsic online..." << std::endl;
   if (0==max_features*grid_rows*grid_cols)
-      cout << "Pure MSCKF..." << endl;
+      LOG(INFO) << "Pure MSCKF..." << std::endl;
   else {
-      cout << "Hybrid MSCKF...Maximum number of feature in state is " << max_features*grid_rows*grid_cols << endl;
+      LOG(INFO) << "Hybrid MSCKF...Maximum number of feature in state is " << max_features*grid_rows*grid_cols << std::endl;
       if (1==feature_idp_dim)
-          cout << "features augmented into state will use 1d idp" << endl;
+          LOG(INFO) << "features augmented into state will use 1d idp" << std::endl;
       else
-          cout << "features augmented into state will use 3d idp" << endl;
+          LOG(INFO) << "features augmented into state will use 3d idp" << std::endl;
       if (use_schmidt)
-          cout << "Applying Schmidt EKF" << endl;
+          LOG(INFO) << "Applying Schmidt EKF" << std::endl;
   }
-  cout << "===========================================" << endl << endl;
+  LOG(INFO) << "===========================================" << std::endl;
 
   return true;
 }
@@ -385,7 +385,7 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
         // Update FEJ imu state
         state_server.imu_state_FEJ_now = state_server.imu_state;
         // debug log
-        fTakeOffStamp << fixed << setprecision(9) << take_off_stamp << endl;
+        fTakeOffStamp << fixed << setprecision(9) << take_off_stamp << std::endl;
       } else
         return false;		
   }
@@ -450,7 +450,7 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
       << bgx << " " << bgy << " " << bgz << " "
       << bax << " " << bay << " " << baz << " "
       << qbcw << " " << qbcx << " " << qbcy << " " << qbcz << " "
-      << tx << " " << ty << " " << tz << endl;
+      << tx << " " << ty << " " << tz << std::endl;
 
   // Update active_slam_features for visualization
   for (auto fid : state_server.feature_states) {
@@ -991,8 +991,9 @@ void LarVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
 
   // Prepare all the required data.
   if (state_server.imu_states_augment.find(state_id)
-      ==state_server.imu_states_augment.end())
-    printf("state_id is not in imu_states_augment !!!!!");
+      ==state_server.imu_states_augment.end()) {
+        LOG(INFO) << "state_id is not in imu_states_augment !!!!!" << std::endl;
+      }
   IMUState_Aug imu_state_k = state_server.imu_states_augment[state_id];
   const Feature& feature = map_server[feature_id];
 
@@ -1005,8 +1006,9 @@ void LarVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
   } else {
     imu_state_a = state_server.nui_imu_states[feature.id_anchor];
     anch_is_nui = true;
-    if (!use_schmidt)
-      printf("shouldn't enter here if not using schmidt !!!!!");
+    if (!use_schmidt) {
+      LOG(INFO) << "shouldn't enter here if not using schmidt !!!!!" << std::endl;
+    }
   }
   const Matrix3d& R_b2c = imu_state_k.R_imu_cam0;
   const Vector3d& t_c_b = imu_state_k.t_cam0_imu;
@@ -1034,8 +1036,9 @@ void LarVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
     Matrix3d R_ca2w = Quaterniond(
       q_cam_a(3),q_cam_a(0),q_cam_a(1),q_cam_a(2)).toRotationMatrix();
     R_w2ca = R_ca2w.transpose();
-  } else
+  } else {
     R_w2ca = R_b2c*R_w2ba;
+  }
 
   // Inverse depth param feature position in anchor camera frame
   const Vector3d& f_ca = feature.invParam;
@@ -1124,8 +1127,10 @@ void LarVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
 
   // Prepare all the required data.
   if (state_server.imu_states_augment.find(state_id)
-      ==state_server.imu_states_augment.end())
-    printf("state_id is not in imu_states_augment !!!!!");
+      ==state_server.imu_states_augment.end()) {
+        LOG(INFO) << "state_id is not in imu_states_augment !!!!!" << std::endl;
+      }
+
   IMUState_Aug imu_state_k = state_server.imu_states_augment[state_id];
   const Feature& feature = map_server[feature_id];
 
@@ -1138,8 +1143,9 @@ void LarVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
   } else {
     imu_state_a = state_server.nui_imu_states[feature.id_anchor];
     anch_is_nui = true;
-    if (!use_schmidt)
-      printf("shouldn't enter here if not using schmidt !!!!!");
+    if (!use_schmidt) {
+      LOG(INFO) << "shouldn't enter here if not using schmidt !!!!!" << std::endl;
+    }
   }
   const Matrix3d& R_b2c = imu_state_k.R_imu_cam0;
   const Vector3d& t_c_b = imu_state_k.t_cam0_imu;
@@ -1197,7 +1203,7 @@ void LarVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
 
   // Compute the Jacobians
   if (state_id == feature.id_anchor) {
-    printf("Measurement of anchor frame should not be used in 1d idp measurementJacobian!");
+    LOG(INFO) << "Measurement of anchor frame should not be used in 1d idp measurementJacobian!" << std::endl;
     r = Vector2d::Zero();
     H_f = Matrix<double, 2, 1>::Zero();
     H_a = Matrix<double, 2, 6>::Zero();
@@ -1345,8 +1351,9 @@ void LarVio::featureJacobian_ekf(const FeatureIDType& feature_id,
 
   const StateIDType& imu_id = state_server.imu_state.id;
 
-  if (1==feature_idp_dim && imu_id==feature.id_anchor)
-      printf("Measurement of anchor frame should not appear in featureJacobian_ekf");
+  if (1==feature_idp_dim && imu_id==feature.id_anchor) {
+      LOG(INFO) << "Measurement of anchor frame should not appear in featureJacobian_ekf" << std::endl;
+  }
 
   int anchor_cntr;
   int anchor_index;
@@ -1371,7 +1378,7 @@ void LarVio::featureJacobian_ekf(const FeatureIDType& feature_id,
         state_server.imu_states_augment.begin(), anchor_iter);
     anchor_index = LEG_DIM+6*anchor_cntr;
   } else {
-    printf("ERROR HAPPENED IN J_EKF !!!!");
+    LOG(INFO) << "ERROR HAPPENED IN J_EKF !!!!" << std::endl;
   }
 
   auto feature_iter = find(state_server.feature_states.begin(),
@@ -1468,9 +1475,9 @@ void LarVio::measurementUpdate_msckf(
       delta_x_legacy.segment<3>(9).norm() > 0.15 ||
       delta_x_legacy.segment<3>(12).norm() > 0.5*/
       ) {
-    printf("delta velocity: %f\n", delta_x_legacy.segment<3>(3).norm());
-    printf("delta position: %f\n", delta_x_legacy.segment<3>(6).norm());
-    printf("in measurementUpdate_msckf: Update change is too large.\n");
+    LOG(INFO) << "delta velocity: " << delta_x_legacy.segment<3>(3).norm() << std::endl;
+    LOG(INFO) << "delta position: " << delta_x_legacy.segment<3>(6).norm() << std::endl;
+    LOG(INFO) << "in measurementUpdate_msckf: Update change is too large." << std::endl;
   }
 
   // Update IMU state
@@ -1547,7 +1554,7 @@ void LarVio::measurementUpdate_msckf(
         != state_server.imu_states_augment.end())
       imu_state_aug = state_server.imu_states_augment[map_server[feature_id].id_anchor];
     else
-      printf("ERROR HAPPENED IN updt_msckf");
+      LOG(INFO) << "ERROR HAPPENED IN updt_msckf" << std::endl;
     const Vector4d& cam_qua = imu_state_aug.orientation_cam;
     Matrix3d R_c2w = Quaterniond(
         cam_qua(3),cam_qua(0),cam_qua(1),cam_qua(2)).toRotationMatrix();
@@ -1684,9 +1691,9 @@ void LarVio::measurementUpdate_hybrid(
       delta_x_legacy.segment<3>(9).norm() > 0.15 ||
       delta_x_legacy.segment<3>(12).norm() > 0.5*/
       ) {
-    printf("delta velocity: %f\n", delta_x_legacy.segment<3>(3).norm());
-    printf("delta position: %f\n", delta_x_legacy.segment<3>(6).norm());
-    printf("in measurementUpdate_hybrid: Update change is too large.\n");
+    LOG(INFO) << "delta velocity: " << delta_x_legacy.segment<3>(3).norm() << std::endl;
+    LOG(INFO) << "delta position: " << delta_x_legacy.segment<3>(6).norm() << std::endl;
+    LOG(INFO) << "in measurementUpdate_hybrid: Update change is too large." << std::endl;
   }
 
   // Update IMU state
@@ -1765,7 +1772,7 @@ void LarVio::measurementUpdate_hybrid(
         != state_server.imu_states_augment.end())
       imu_state_aug = state_server.imu_states_augment[map_server[feature_id].id_anchor];
     else
-      printf("ERROR HAPPENED IN updt_hybrid");
+      LOG(INFO) << "ERROR HAPPENED IN updt_hybrid" << std::endl;
     const Vector4d& cam_qua = imu_state_aug.orientation_cam;
     Matrix3d R_c2w = Quaterniond(
         cam_qua(3),cam_qua(0),cam_qua(1),cam_qua(2)).toRotationMatrix();
@@ -1871,10 +1878,10 @@ bool LarVio::gatingTest(
   double gamma = r.transpose() * (P1+P2).ldlt().solve(r);  
 
   if (gamma < chi_squared_test_table[dof]) {
-    // cout << "passed" << endl;
+    // LOG(INFO) << "passed" << std::endl;
     return true;
   } else {
-    // cout << "failed" << endl;
+    // LOG(INFO) << "failed" << std::endl;
     return false;
   }
 }
@@ -2170,7 +2177,7 @@ void LarVio::removeLostFeatures() {
       r_ekf_thin = r_temp.head(state_server.state_cov.rows());
     }
     if (H_ekf_thin.rows()<H_ekf.rows())   // debug log
-      printf("H_ekf.row = %ld, H_ekf_thin.rows = %ld",H_ekf.rows(),H_ekf_thin.rows());
+      LOG(INFO) << "H_ekf.row = " << H_ekf.rows() << " H_ekf_thin.rows = " << H_ekf_thin.rows() <<std::endl;
     H_ekf = MatrixXd::Zero(H_ekf_thin.rows(),
         state_server.state_cov.cols());
     H_ekf.leftCols(H_ekf_thin.cols()) = H_ekf_thin;
@@ -2484,7 +2491,7 @@ void LarVio::pruneImuStateBuffer() {
       // debug log
       if (feature.observations.find(state_server.imu_state.id) ==
           feature.observations.end())
-          printf("A LOST FEATURE SHOULD NOT BE HERE !\n");
+          LOG(INFO) << "A LOST FEATURE SHOULD NOT BE HERE !" <<std::endl;
     }
   }
 
@@ -2512,9 +2519,9 @@ void LarVio::pruneImuStateBuffer() {
           !=used_IDs.end()) {
         // debug log
         if (involved_state_ids.size() == 0)
-          printf("Size of involved_state_ids should not be 0 !!");
+          LOG(INFO) << "Size of involved_state_ids should not be 0 !!" <<std::endl;
         if (involved_state_ids.size() == 1)
-          printf("Size of involved_state_ids should not be 1 !!");
+          LOG(INFO) << "Size of involved_state_ids should not be 1 !!" <<std::endl;
 
         MatrixXd H_xj;
         VectorXd r_j;
@@ -2743,7 +2750,7 @@ void LarVio::resetFejPoint () {
   }
 
   // debug log
-  printf("RESET FIRST ESTIMATE POINT AT %fs!",state_server.imu_state.time-take_off_stamp);
+  LOG(INFO) << "RESET FIRST ESTIMATE POINT AT " << state_server.imu_state.time-take_off_stamp <<std::endl;
 }
 
 
@@ -2908,7 +2915,7 @@ void LarVio::measurementUpdate_ZUPT_vpq () {
         != state_server.imu_states_augment.end())
       imu_state_aug = state_server.imu_states_augment[map_server[feature_id].id_anchor];
     else
-      printf("ERROR HAPPENED IN VPQ");
+      LOG(INFO) << "ERROR HAPPENED IN VPQ" <<std::endl;
     const Vector4d& cam_qua = imu_state_aug.orientation_cam;
     Matrix3d R_c2w = Quaterniond(
         cam_qua(3),cam_qua(0),cam_qua(1),cam_qua(2)).toRotationMatrix();
@@ -3389,7 +3396,7 @@ void LarVio::delRedundantFeatures() {
       auto feature_iter = find(state_server.feature_states.begin(),
         state_server.feature_states.end(), id);
       if (feature_iter == state_server.feature_states.end())
-        printf("AN UNEXPECTED ERROR HAPPENED !");
+        LOG(INFO) << "AN UNEXPECTED ERROR HAPPENED !" <<std::endl;
     }
     sort(id_num.begin(), id_num.end(),
           LarVio::compareByObsNum);
@@ -3422,7 +3429,7 @@ StateIDType LarVio::getNewAnchorId(Feature& feature, const std::vector<StateIDTy
 
   int looplen;
   if (size<=2) {
-    printf("Size of imu_states_augment is not big enough!");
+    LOG(INFO) << "Size of imu_states_augment is not big enough!" <<std::endl;
     key_state_iter = state_server.imu_states_augment.end();
     --key_state_iter;
     return key_state_iter->first;
@@ -3459,7 +3466,7 @@ StateIDType LarVio::getNewAnchorId(Feature& feature, const std::vector<StateIDTy
 
   // debug log
   if (key_state_iter==state_server.imu_states_augment.end())
-    printf("new anchor id should not added to the end!");
+    LOG(INFO) << "new anchor id should not added to the end!" <<std::endl;
 
   if (bValid) {
     return Id_min;

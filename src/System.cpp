@@ -86,7 +86,7 @@ bool System::initialize() {
     // Load necessary parameters
     if (!loadParameters())
         return false;
-    ROS_INFO("System: Finish loading ROS parameters...");
+    LOG(INFO) << "System: Finish loading ROS parameters...";
 
     // Set pointers of image processer and estimator.
     ImgProcesser.reset(new ImageProcessor(config_file));
@@ -94,18 +94,18 @@ bool System::initialize() {
 
     // Initialize image processer and estimator.
     if (!ImgProcesser->initialize()) {
-        ROS_WARN("Image Processer initialization failed!");
+        LOG(WARNING) << "Image Processer initialization failed!";
         return false;
     }
     if (!Estimator->initialize()) {
-        ROS_WARN("Estimator initialization failed!");
+        LOG(WARNING) << "Estimator initialization failed!";
         return false;
     }
 
     // Try subscribing msgs
     if (!createRosIO())
         return false;
-    ROS_INFO("System Manager: Finish creating ROS IO...");
+    LOG(INFO) << "System Manager: Finish creating ROS IO...";
 
     return true;
 }

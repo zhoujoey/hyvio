@@ -13,7 +13,7 @@
 #include <sensor_msgs/Image.h>
 #include <larvio/image_processor.h>
 #include <larvio/larvio.h>
-
+#include <glog/logging.h>
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <message_filters/subscriber.h>

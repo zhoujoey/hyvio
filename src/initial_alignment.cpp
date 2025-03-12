@@ -30,7 +30,6 @@ void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs)
         b += tmp_A.transpose() * tmp_b;
     }
     delta_bg = A.ldlt().solve(b);
-    // printf("gyroscope bias initial calibration " << delta_bg.transpose());
 
     for (int i = 0; i <= WINDOW_SIZE; i++)     
         Bgs[i] += delta_bg;
@@ -156,12 +155,12 @@ bool LinearAlignment(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vect
         tmp_A.block<3, 3>(0, 6) = frame_i->second.R.transpose() * dt * dt / 2 * Matrix3d::Identity();
         tmp_A.block<3, 1>(0, 9) = frame_i->second.R.transpose() * (frame_j->second.T - frame_i->second.T) / 100.0;    
         tmp_b.block<3, 1>(0, 0) = frame_j->second.pre_integration->delta_p + frame_i->second.R.transpose() * frame_j->second.R * TIC - TIC;
-        //cout << "delta_p   " << frame_j->second.pre_integration->delta_p.transpose() << endl;
+        LOG(INFO) << "delta_p   " << frame_j->second.pre_integration->delta_p.transpose() << std::endl;
         tmp_A.block<3, 3>(3, 0) = -Matrix3d::Identity();
         tmp_A.block<3, 3>(3, 3) = frame_i->second.R.transpose() * frame_j->second.R;
         tmp_A.block<3, 3>(3, 6) = frame_i->second.R.transpose() * dt * Matrix3d::Identity();
         tmp_b.block<3, 1>(3, 0) = frame_j->second.pre_integration->delta_v;
-        //cout << "delta_v   " << frame_j->second.pre_integration->delta_v.transpose() << endl;
+        LOG(INFO) << "delta_v   " << frame_j->second.pre_integration->delta_v.transpose() << std::endl;
 
         Matrix<double, 6, 6> cov_inv = Matrix<double, 6, 6>::Zero();
         //cov.block<6, 6>(0, 0) = IMU_cov[i + 1];
@@ -184,9 +183,9 @@ bool LinearAlignment(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vect
     b = b * 1000.0;
     x = A.ldlt().solve(b);
     double s = x(n_state - 1) / 100.0;     
-    // printf("estimated scale: %f", s);
+
     g = x.segment<3>(n_state - 4);
-    // printf(" result g     " << g.norm() << " " << g.transpose());
+
     if(fabs(g.norm() - Gravity.norm()) > 1.0 || s < 0)       
     {
         return false;
@@ -195,7 +194,7 @@ bool LinearAlignment(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vect
     RefineGravity(all_image_frame, g, x, TIC);      
     s = (x.tail<1>())(0) / 100.0;                   
     (x.tail<1>())(0) = s;
-    // printf(" refine     " << g.norm() << " " << g.transpose());
+
     if(s < 0.0 )
         return false;   
     else

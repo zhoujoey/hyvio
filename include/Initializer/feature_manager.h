@@ -12,7 +12,7 @@
 #include <vector>
 #include <numeric>
 using namespace std;
-
+#include <glog/logging.h>
 #include <Eigen/Dense>
 using namespace Eigen;
 

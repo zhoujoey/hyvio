@@ -13,7 +13,7 @@
 #define IMAGE_PROCESSOR_H
 
 #include <larvio/feature_msg.h>
-
+#include <glog/logging.h>
 #include <vector>
 #include <map>
 #include <boost/shared_ptr.hpp>

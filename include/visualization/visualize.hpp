@@ -9,7 +9,7 @@
 #include <pangolin/pangolin.h>
 #include <Eigen/Geometry>
 #include <iostream>
-
+#include <glog/logging.h>
 #include "larvio/imu_state.h"
 
 

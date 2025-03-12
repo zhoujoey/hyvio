@@ -13,7 +13,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
-
+#include <glog/logging.h>
 #include <larvio/feature_msg.h>
 
 #include "larvio/imu_state.h"
