@@ -225,7 +225,9 @@ inline Eigen::Vector4d rotationToQuaternion(
     q(2) = (R(1, 0)-R(0, 1)) / (4*q(3));
   }
 
-  if (q(3) < 0) q = -q;
+  if (q(3) < 0) {
+    q = -q;
+  }
   quaternionNormalize(q);
   return q;
 }

@@ -161,21 +161,28 @@ bool LarVio::loadParameters() {
       LEG_DIM = 22;
 
   state_server.state_cov = MatrixXd::Zero(LEG_DIM, LEG_DIM);
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 3; ++i) {
       state_server.state_cov(i, i) = orientation_cov;
-  for (int i = 3; i < 6; ++i)
+  }
+  for (int i = 3; i < 6; ++i) {
       state_server.state_cov(i, i) = velocity_cov;
-  for (int i = 6; i < 9; ++i)
+  }
+  for (int i = 6; i < 9; ++i) {
       state_server.state_cov(i, i) = position_cov;
-  for (int i = 9; i < 12; ++i)
+  }
+  for (int i = 9; i < 12; ++i) {
       state_server.state_cov(i, i) = gyro_bias_cov;
-  for (int i = 12; i < 15; ++i)
+  }
+  for (int i = 12; i < 15; ++i) {
       state_server.state_cov(i, i) = acc_bias_cov;
+  }
   if (estimate_extrin) {
-      for (int i = 15; i < 18; ++i)
+      for (int i = 15; i < 18; ++i) {
           state_server.state_cov(i, i) = extrinsic_rotation_cov;
-      for (int i = 18; i < 21; ++i)
+      }
+      for (int i = 18; i < 21; ++i) {
           state_server.state_cov(i, i) = extrinsic_translation_cov;
+      }
   }
   if (estimate_td) {
       state_server.state_cov(21, 21) = 4e-6;
@@ -262,8 +269,9 @@ bool LarVio::loadParameters() {
       grid_height = (y_max-y_min);
   }
   // Initialize the grid map
-  for (int i=0; i<grid_rows*grid_cols; ++i)
+  for (int i=0; i<grid_rows*grid_cols; ++i) {
       grid_map[i] = vector<FeatureIDType>(0);
+  }
 
   // Feature idp type
   feature_idp_dim = fsSettings["feature_idp_dim"];
@@ -278,32 +286,38 @@ bool LarVio::loadParameters() {
 
   // Print VIO setup
   LOG(INFO) << "===========================================" << std::endl;
-  if (if_FEJ_config)
+  if (if_FEJ_config) {
       LOG(INFO) << "using FEJ..." << std::endl;
-  else
+  } else {
       LOG(INFO) << "not using FEJ..." << std::endl;
-  if (estimate_td)
+  }
+  if (estimate_td) {
       LOG(INFO) << "estimating td... initial td = " << state_server.td << std::endl;
-  else
+  } else {
       LOG(INFO) << "not estimating td..." << std::endl;
-  if (estimate_extrin)
+  }
+  if (estimate_extrin) {
       LOG(INFO) << "estimating extrinsic..." << std::endl;
-  else
+  } else {
       LOG(INFO) << "not estimating extrinsic..." << std::endl;
-  if (calib_imu)
+  }
+  if (calib_imu) {
       LOG(INFO) << "calibrating imu instrinsic online..." << std::endl;
-  else
+  } else {
       LOG(INFO) << "not calibrating imu instrinsic online..." << std::endl;
-  if (0==max_features*grid_rows*grid_cols)
+  }
+  if (0==max_features*grid_rows*grid_cols) {
       LOG(INFO) << "Pure MSCKF..." << std::endl;
-  else {
+  } else {
       LOG(INFO) << "Hybrid MSCKF...Maximum number of feature in state is " << max_features*grid_rows*grid_cols << std::endl;
-      if (1==feature_idp_dim)
+      if (1==feature_idp_dim) {
           LOG(INFO) << "features augmented into state will use 1d idp" << std::endl;
-      else
+      } else {
           LOG(INFO) << "features augmented into state will use 3d idp" << std::endl;
-      if (use_schmidt)
+      }
+      if (use_schmidt) {
           LOG(INFO) << "Applying Schmidt EKF" << std::endl;
+      }
   }
   LOG(INFO) << "===========================================" << std::endl;
 
@@ -312,8 +326,9 @@ bool LarVio::loadParameters() {
 
 
 bool LarVio::initialize() {
-  if (!loadParameters()) return false;
-
+  if (!loadParameters()) {
+    return false;
+  }
   // debug log
   fImuState.open((output_dir+"msckf_2_state.txt").c_str(), ofstream::trunc);
   fTakeOffStamp.open((output_dir+"msckf_2_takeoff.txt").c_str(), ofstream::trunc);
@@ -365,10 +380,12 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
   // features are not utilized until receiving imu msgs ahead
   if (!bFirstFeatures) {
       if ((imu_msg_buffer.begin() != imu_msg_buffer.end()) &&
-          (imu_msg_buffer.begin()->timeStampToSec-msg->timeStampToSec-state_server.td <= 0.0))
+          (imu_msg_buffer.begin()->timeStampToSec-msg->timeStampToSec-state_server.td <= 0.0)) {
           bFirstFeatures = true;
-      else
+      }
+      else {
           return false;
+      }
   }
 
   // Return if the gravity vector has not been set.
@@ -386,8 +403,9 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
         state_server.imu_state_FEJ_now = state_server.imu_state;
         // debug log
         fTakeOffStamp << fixed << setprecision(9) << take_off_stamp << std::endl;
-      } else
-        return false;		
+      } else {
+        return false;	
+      }	
   }
 
   // Propogate the IMU state.
@@ -402,8 +420,9 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
   stateAugmentation();
 
   // Check if a zero velocity update is happened
-  if (if_ZUPT_valid)
+  if (if_ZUPT_valid) {
       if_ZUPT = checkZUPT();
+  }
 
   // Perform measurement update if necessary.
   removeLostFeatures();

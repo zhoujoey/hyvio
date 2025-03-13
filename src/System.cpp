@@ -84,8 +84,9 @@ bool System::createRosIO() {
 // Initializing the system.
 bool System::initialize() {
     // Load necessary parameters
-    if (!loadParameters())
+    if (!loadParameters()) {
         return false;
+    }
     LOG(INFO) << "System: Finish loading ROS parameters...";
 
     // Set pointers of image processer and estimator.
@@ -103,8 +104,9 @@ bool System::initialize() {
     }
 
     // Try subscribing msgs
-    if (!createRosIO())
+    if (!createRosIO()) {
         return false;
+    }
     LOG(INFO) << "System Manager: Finish creating ROS IO...";
 
     return true;
@@ -122,8 +124,9 @@ void System::imuCallback(const sensor_msgs::ImuConstPtr& msg) {
 // Process the image and trigger the estimator.
 void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
     // Do nothing if no imu msg is received.
-    if (imu_msg_buffer.empty())
+    if (imu_msg_buffer.empty()) {
         return;
+    }
 
     // test
     cv_bridge::CvImageConstPtr cvCPtr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -139,9 +142,11 @@ void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
         img_msg_buffer.push_back(msgPtr);
         header_buffer.push_back(header);
     }
+    
     if (!img_msg_buffer.empty()) {
-        if ((imu_msg_buffer.end()-1)->timeStampToSec-(*(img_msg_buffer.begin()))->timeStampToSec<-imu_img_timeTh)
+        if ((imu_msg_buffer.end()-1)->timeStampToSec-(*(img_msg_buffer.begin()))->timeStampToSec<-imu_img_timeTh) {
             return;
+        }
         bUseBuff = true;
     }
 
@@ -167,15 +172,15 @@ void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
         }
 
         delete features;
-
         return;
     } else {
         // Loop for using all the img in the buffer that satisfy the condition.
         int counter = 0;
         for (int i = 0; i < img_msg_buffer.size(); ++i) {
             // Break the loop if imu data is not enough
-            if ((imu_msg_buffer.end()-1)->timeStampToSec-img_msg_buffer[i]->timeStampToSec<-imu_img_timeTh)
+            if ((imu_msg_buffer.end()-1)->timeStampToSec-img_msg_buffer[i]->timeStampToSec<-imu_img_timeTh) {
                 break;
+            }
 
             MonoCameraMeasurementPtr features = new MonoCameraMeasurement;
 
@@ -198,7 +203,6 @@ void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
             }
 
             delete features;
-
             counter++;
         }
         img_msg_buffer.erase(img_msg_buffer.begin(), img_msg_buffer.begin()+counter);
@@ -219,12 +223,16 @@ void System::publishVIO(const ros::Time& time) {
     Matrix3d P_body_vel = Estimator->getPvel();
     tf::poseEigenToMsg(T_b_w, odom_msg.pose.pose);
     tf::vectorEigenToMsg(body_velocity, odom_msg.twist.twist.linear);
-    for (int i = 0; i < 6; ++i)
-        for (int j = 0; j < 6; ++j)
+    for (int i = 0; i < 6; ++i) {
+        for (int j = 0; j < 6; ++j) {
             odom_msg.pose.covariance[6*i+j] = P_body_pose(i, j);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
+        }
+    }
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             odom_msg.twist.covariance[i*6+j] = P_body_vel(i, j);
+        }
+    }
 
     // construct path msg
     path_msg.header.stamp = time;

@@ -140,6 +140,17 @@ target_link_libraries(system_manager_nodelet glog
     ${catkin_LIBRARIES}
 )
 
+# Add executable target
+add_executable(larvio_node
+    src/main.cpp
+)
+
+target_link_libraries(larvio_node
+    system_manager
+    ${catkin_LIBRARIES}
+    glog
+)
+
 #############
 ## Install ##
 #############

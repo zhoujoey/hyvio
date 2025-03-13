@@ -1,0 +1,16 @@
+<launch>
+    <arg name="fixed_frame_id" default="world"/>
+    <node pkg="nodelet" type="nodelet" name="vio" args='standalone larvio/SystemNodelet'
+    output="screen">
+        <param name="fixed_frame_id" value="$(arg fixed_frame_id)"/>
+        <param name="child_frame_id" value="odom"/>
+
+        <remap from="~imu" to="/imu0"/>
+        <remap from="~cam0_image" to="/cam0/image_raw"/>
+
+        <param name="config_file" value="$(find larvio)/config/euroc.yaml"/>
+    </node>
+
+    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/larvio.rviz" />
+
+</launch>
