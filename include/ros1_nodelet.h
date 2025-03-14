@@ -3,18 +3,18 @@
 // Nodelet for system manager.
 //
 
-#ifndef SYSTEM_NODELET_H
-#define SYSTEM_NODELET_H
+#ifndef ROS1_NODELET_H
+#define ROS1_NODELET_H
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
 #include <System.h>
 
 namespace larvio {
-    class SystemNodelet : public nodelet::Nodelet {
+    class Ros1Nodelet : public nodelet::Nodelet {
     public:
-        SystemNodelet() { return; }
-        ~SystemNodelet() {
+        Ros1Nodelet() { return; }
+        ~Ros1Nodelet() {
             // debug log
             return; }
 

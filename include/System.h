@@ -7,26 +7,8 @@
 #define SYSTEM_H
 
 
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/Image.h>
-#include <larvio/image_processor.h>
-#include <larvio/larvio.h>
-#include <glog/logging.h>
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <message_filters/subscriber.h>
+#include <common_lib.h>
 
-#include <fstream>
-
-#include "sensors/ImuData.hpp"
-#include "sensors/ImageData.hpp"
-
-#include <nav_msgs/Odometry.h>
-#include <nav_msgs/Path.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
 
 namespace larvio {
 
@@ -36,7 +18,7 @@ namespace larvio {
 class System {
 public:
     // Constructor
-    System(ros::NodeHandle& n);
+    System(node_ros& n);
     // Disable copy and assign constructors.
     System(const ImageProcessor&) = delete;
     System operator=(const System&) = delete;
@@ -53,8 +35,9 @@ public:
 private:
 
     // Ros node handle.
-    ros::NodeHandle nh;
+    node_ros nh;
 
+#ifdef ROS1
     // Subscribers.
     ros::Subscriber img_sub;
     ros::Subscriber imu_sub;
@@ -65,15 +48,27 @@ private:
     ros::Publisher stable_feature_pub;
     ros::Publisher active_feature_pub;
     ros::Publisher path_pub;
+#else
+    // Subscribers.
+    rclcpp::Subscription<image_ros>::SharedPtr img_sub;
+    rclcpp::Subscription<imu_ros>::SharedPtr imu_sub;
+
+    // Publishers.
+    image_transport::Publisher vis_img_pub;
+    rclcpp::Publisher<odom_ros>::SharedPtr odom_pub;
+    rclcpp::Publisher<pcl_ros>::SharedPtr stable_feature_pub;
+    rclcpp::Publisher<pcl_ros>::SharedPtr active_feature_pub;
+    rclcpp::Publisher<path_ros>::SharedPtr path_pub;
+#endif
 
     // Msgs to be published.
     std::vector<std_msgs::Header> header_buffer;    // buffer for heads of msgs to be published
 
     // Msgs to be published.
-    nav_msgs::Odometry odom_msg;
+    odom_ros odom_msg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr stable_feature_msg_ptr;
     pcl::PointCloud<pcl::PointXYZ>::Ptr active_feature_msg_ptr;
-    nav_msgs::Path path_msg;
+    path_ros path_msg;
 
     // Frame id
     std::string fixed_frame_id;
@@ -114,20 +109,21 @@ private:
         *    Callback function for the monocular images.
         * @param image msg.
         */
-    void imageCallback(const sensor_msgs::ImageConstPtr& msg);
+    void imageCallback(const image_ros_ptr& msg);
 
     /*
         * @brief imuCallback
         *    Callback function for the imu message.
         * @param msg IMU msg.
         */
-    void imuCallback(const sensor_msgs::ImuConstPtr& msg);
+    void imuCallback(const imu_ros_ptr& msg);
 
     /*
-        * @brief publish Publish the results of VIO.
+        * @brief publishVIO
+        *    Publish the results of VIO.
         * @param time The time stamp of output msgs.
         */
-    void publishVIO(const ros::Time& time);
+    void publishVIO(const time_ros& time);
 };
 
 typedef System::Ptr SystemPtr;

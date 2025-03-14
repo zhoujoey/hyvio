@@ -1,13 +1,9 @@
-//
-// Created by xiaochen at 19-8-21.
-// Nodelet for system manager.
-//
-
-#include <System_nodelet.h>
+#ifdef ROS1
+#include <ros1_nodelet.h>
 
 namespace larvio {
     
-void SystemNodelet::onInit() {
+void Ros1Nodelet::onInit() {
     system_ptr.reset(new System(getPrivateNodeHandle()));
     if (!system_ptr->initialize()) {
         LOG(ERROR) << "Cannot initialize System Manager...";
@@ -16,6 +12,8 @@ void SystemNodelet::onInit() {
     return;
 }
 
-PLUGINLIB_EXPORT_CLASS(larvio::SystemNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(larvio::Ros1Nodelet, nodelet::Nodelet);
 
 } // end namespace larvio
+
+#endif

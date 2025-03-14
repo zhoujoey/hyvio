@@ -3,16 +3,13 @@
 // Managing the image processer and the estimator.
 //
 
-#include <sensor_msgs/PointCloud2.h>
+
 
 #include <System.h>
 
 #include <iostream>
 
-#include <cv_bridge/cv_bridge.h>
 
-#include <eigen_conversions/eigen_msg.h>
-#include <tf_conversions/tf_eigen.h>
 
 using namespace std;
 using namespace cv;
@@ -20,8 +17,7 @@ using namespace Eigen;
 
 namespace larvio {
 
-
-System::System(ros::NodeHandle& n) : nh(n) {}
+System::System(node_ros& n) : nh(n) {}
 
 
 System::~System() {
@@ -31,7 +27,7 @@ System::~System() {
 }
 
 
-// Load parameters from launch file
+#ifdef ROS1
 bool System::loadParameters() {
     // Configuration file path.
     nh.getParam("config_file", config_file);
@@ -44,8 +40,6 @@ bool System::loadParameters() {
     return true;
 }
 
-
-// Subscribe image and imu msgs.
 bool System::createRosIO() {
     // Subscribe imu msg.
     imu_sub = nh.subscribe("imu", 5000, &System::imuCallback, this);
@@ -58,16 +52,16 @@ bool System::createRosIO() {
     vis_img_pub = it.advertise("visualization_image", 1);
 
     // Advertise odometry msg.
-    odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
+    odom_pub = nh.advertise<odom_ros>("odom", 10);
 
     // Advertise point cloud msg.
-    stable_feature_pub = nh.advertise<sensor_msgs::PointCloud2>(
+    stable_feature_pub = nh.advertise<pcl_ros>(
             "stable_feature_point_cloud", 1);
-    active_feature_pub = nh.advertise<sensor_msgs::PointCloud2>(
+    active_feature_pub = nh.advertise<pcl_ros>(
             "active_feature_point_cloud", 1);
 
     // Advertise path msg.
-    path_pub = nh.advertise<nav_msgs::Path>("path", 10);
+    path_pub = nh.advertise<path_ros>("path", 10);
 
     nh.param<string>("fixed_frame_id", fixed_frame_id, "world");
     nh.param<string>("child_frame_id", child_frame_id, "robot");
@@ -79,6 +73,54 @@ bool System::createRosIO() {
 
     return true;
 }
+#else
+// Load parameters from launch file
+bool System::loadParameters() {
+    // Configuration file path.
+    nh->get_parameter("config_file", config_file);
+
+    // Imu and img synchronized threshold.
+    double imu_rate;
+    nh->get_parameter("imu_rate", imu_rate);
+    imu_img_timeTh = 1/(2*imu_rate);
+
+    return true;
+}
+
+bool System::createRosIO() {
+    // Subscribe imu msg.
+    imu_sub = nh->create_subscription<imu_ros>("imu", 5000, &System::imuCallback, this);
+
+    // Subscribe image msg.
+    img_sub = nh->create_subscription<image_ros>("cam0_image", 50, &System::imageCallback, this);
+
+    // Advertise processed image msg.
+    image_transport::ImageTransport it(nh);
+    vis_img_pub = it.advertise("visualization_image", 1);
+
+    // Advertise odometry msg.
+    odom_pub = nh->advertise<odom_ros>("odom", 10);
+
+    // Advertise point cloud msg.
+    stable_feature_pub = nh->advertise<pcl_ros>(
+            "stable_feature_point_cloud", 1);
+    active_feature_pub = nh->advertise<pcl_ros>(
+            "active_feature_point_cloud", 1);
+
+    // Advertise path msg.
+    path_pub = nh->advertise<path_ros>("path", 10);
+
+    nh->param<string>("fixed_frame_id", fixed_frame_id, "world");
+    nh->param<string>("child_frame_id", child_frame_id, "robot");
+
+    stable_feature_msg_ptr.reset(
+        new pcl::PointCloud<pcl::PointXYZ>());
+    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    stable_feature_msg_ptr->height = 1;
+
+    return true;
+}
+#endif
 
 
 // Initializing the system.
@@ -114,7 +156,7 @@ bool System::initialize() {
 
 
 // Push imu msg into the buffer.
-void System::imuCallback(const sensor_msgs::ImuConstPtr& msg) {
+void System::imuCallback(const imu_ros_ptr& msg) {
     imu_msg_buffer.push_back(ImuData(msg->header.stamp.toSec(),
             msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z,
             msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z));
@@ -122,13 +164,12 @@ void System::imuCallback(const sensor_msgs::ImuConstPtr& msg) {
 
 
 // Process the image and trigger the estimator.
-void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
+void System::imageCallback(const image_ros_ptr& msg) {
     // Do nothing if no imu msg is received.
     if (imu_msg_buffer.empty()) {
         return;
     }
 
-    // test
     cv_bridge::CvImageConstPtr cvCPtr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
     larvio::ImageDataPtr msgPtr(new ImgData);
     msgPtr->timeStampToSec = cvCPtr->header.stamp.toSec();
@@ -212,7 +253,7 @@ void System::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
 
 
 // Publish informations of VIO, including odometry, path, points cloud and whatever needed.
-void System::publishVIO(const ros::Time& time) {
+void System::publishVIO(const time_ros& time) {
     // construct odometry msg
     odom_msg.header.stamp = time;
     odom_msg.header.frame_id = fixed_frame_id;
