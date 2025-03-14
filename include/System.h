@@ -48,6 +48,23 @@ private:
     ros::Publisher stable_feature_pub;
     ros::Publisher active_feature_pub;
     ros::Publisher path_pub;
+    // Msgs to be published.
+    std::vector<header_ros> header_buffer;    // buffer for heads of msgs to be published
+
+    inline double Stamp2Sec(const std_msgs::Header & header){
+        return header.stamp.sec + header.stamp.nsec/1e9;
+    };
+
+
+    inline void Sec2Stamp(std_msgs::Header & header, const double time) {
+        header.stamp = ros::Time().fromSec(time);
+        return;
+    }
+
+    inline void SetTimeNow(std_msgs::Header & header){
+        header.stamp = ros::Time::now();
+    }
+
 #else
     // Subscribers.
     rclcpp::Subscription<image_ros>::SharedPtr img_sub;
@@ -59,20 +76,41 @@ private:
     rclcpp::Publisher<pcl_ros>::SharedPtr stable_feature_pub;
     rclcpp::Publisher<pcl_ros>::SharedPtr active_feature_pub;
     rclcpp::Publisher<path_ros>::SharedPtr path_pub;
+    // Msgs to be published.
+    std::vector<header_ros> header_buffer;    // buffer for heads of msgs to be published
+
+    inline double Stamp2Sec(const std_msgs::msg::Header & header){
+        auto time = header.stamp;
+        return rclcpp::Time(time).seconds();
+    };
+
+    inline void Sec2Stamp(std_msgs::msg::Header & header, const double time) {
+        int32_t sec = std::floor(time);
+        auto nanosec_d = (time - std::floor(time)) * 1e9;
+        uint32_t nanosec = nanosec_d;
+        header.stamp = rclcpp::Time(sec, nanosec);
+        return; 
+    }
+
+    inline void SetTimeNow(std_msgs::msg::Header & header){
+        header.stamp = rclcpp::Clock().now();
+    }
+
 #endif
 
-    // Msgs to be published.
-    std::vector<std_msgs::Header> header_buffer;    // buffer for heads of msgs to be published
+
 
     // Msgs to be published.
     odom_ros odom_msg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr stable_feature_msg_ptr;
     pcl::PointCloud<pcl::PointXYZ>::Ptr active_feature_msg_ptr;
+    // pcl_ros stable_cloud_msg; 
+    // pcl_ros active_cloud_msg;
     path_ros path_msg;
 
     // Frame id
-    std::string fixed_frame_id;
-    std::string child_frame_id;
+    std::string fixed_frame_id = "world";
+    std::string child_frame_id = "odom";
 
     // Pointer for image processer.
     ImageProcessorPtr ImgProcesser;

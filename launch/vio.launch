@@ -8,5 +8,5 @@
         <remap from="~cam0_image" to="/cam0/image_raw"/>
     </node>
 
-    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/vio.rviz" />
+    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/vio_ros1.rviz" />
 </launch>

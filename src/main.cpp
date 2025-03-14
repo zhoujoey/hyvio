@@ -41,12 +41,17 @@ int main(int argc, char **argv) {
     // Initialize ROS node
     rclcpp::init(argc, argv);
     node_ros nh = std::make_shared<rclcpp::Node>("vio_slam");
-
+    LOG(INFO) << "LARVIO system created1";
     // Initialize google logging
-    google::InitGoogleLogging(argv[0]);
-    
+    FLAGS_colorlogtostderr = true;
+    FLAGS_alsologtostderr = true;
+    FLAGS_v = 1;
+
+    google::InitGoogleLogging("lidar_slam");
+    LOG(INFO) << "LARVIO system created2";
     // Create LARVIO system
     larvio::System system(nh);
+    LOG(INFO) << "LARVIO system created3";
     
     // Initialize the system
     if (!system.initialize()) {

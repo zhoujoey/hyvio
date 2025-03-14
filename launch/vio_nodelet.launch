@@ -9,6 +9,6 @@
         <param name="config_file" value="$(find larvio)/config/euroc.yaml"/>
     </node>
 
-    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/vio.rviz" />
+    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/vio_ros1.rviz" />
 
 </launch>

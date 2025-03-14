@@ -52,24 +52,17 @@ bool System::createRosIO() {
     vis_img_pub = it.advertise("visualization_image", 1);
 
     // Advertise odometry msg.
-    odom_pub = nh.advertise<odom_ros>("odom", 10);
+    odom_pub = std::make_shared<ros::Publisher>(nh.advertise<odom_ros>("odom", 10));
 
     // Advertise point cloud msg.
-    stable_feature_pub = nh.advertise<pcl_ros>(
-            "stable_feature_point_cloud", 1);
-    active_feature_pub = nh.advertise<pcl_ros>(
-            "active_feature_point_cloud", 1);
+    stable_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>("/stable_feature_point_cloud", 1));
+    active_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>("/active_feature_point_cloud", 1));
 
     // Advertise path msg.
-    path_pub = nh.advertise<path_ros>("path", 10);
+    path_pub = std::make_shared<ros::Publisher>(nh.advertise<path_ros>("path", 10));
 
     nh.param<string>("fixed_frame_id", fixed_frame_id, "world");
-    nh.param<string>("child_frame_id", child_frame_id, "robot");
-
-    stable_feature_msg_ptr.reset(
-        new pcl::PointCloud<pcl::PointXYZ>());
-    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
-    stable_feature_msg_ptr->height = 1;
+    nh.param<string>("child_frame_id", child_frame_id, "odom");
 
     return true;
 }
@@ -77,10 +70,12 @@ bool System::createRosIO() {
 // Load parameters from launch file
 bool System::loadParameters() {
     // Configuration file path.
+    nh->declare_parameter("config_file", "");
     nh->get_parameter("config_file", config_file);
 
     // Imu and img synchronized threshold.
-    double imu_rate;
+    double imu_rate = 200.0;
+    nh->declare_parameter("imu_rate", 200.0);
     nh->get_parameter("imu_rate", imu_rate);
     imu_img_timeTh = 1/(2*imu_rate);
 
@@ -89,34 +84,33 @@ bool System::loadParameters() {
 
 bool System::createRosIO() {
     // Subscribe imu msg.
-    imu_sub = nh->create_subscription<imu_ros>("imu", 5000, &System::imuCallback, this);
+    auto sensor_qos = rclcpp::QoS(200000);
+    imu_sub = nh->create_subscription<imu_ros>("/imu0", sensor_qos,
+            [this](const imu_ros_ptr msg) { imuCallback(msg); } 
+    );
 
     // Subscribe image msg.
-    img_sub = nh->create_subscription<image_ros>("cam0_image", 50, &System::imageCallback, this);
+    img_sub = nh->create_subscription<image_ros>("/cam0/image_raw", sensor_qos,
+            [this](const image_ros_ptr msg) { imageCallback(msg); } 
+    );
 
     // Advertise processed image msg.
     image_transport::ImageTransport it(nh);
     vis_img_pub = it.advertise("visualization_image", 1);
 
     // Advertise odometry msg.
-    odom_pub = nh->advertise<odom_ros>("odom", 10);
+    odom_pub = nh->create_publisher<odom_ros>("odom", 10);
 
     // Advertise point cloud msg.
-    stable_feature_pub = nh->advertise<pcl_ros>(
-            "stable_feature_point_cloud", 1);
-    active_feature_pub = nh->advertise<pcl_ros>(
-            "active_feature_point_cloud", 1);
+    stable_feature_pub = nh->create_publisher<pcl_ros>("stable_feature_point_cloud", 1);
+    active_feature_pub = nh->create_publisher<pcl_ros>("active_feature_point_cloud", 1);
 
     // Advertise path msg.
-    path_pub = nh->advertise<path_ros>("path", 10);
-
-    nh->param<string>("fixed_frame_id", fixed_frame_id, "world");
-    nh->param<string>("child_frame_id", child_frame_id, "robot");
-
-    stable_feature_msg_ptr.reset(
-        new pcl::PointCloud<pcl::PointXYZ>());
-    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
-    stable_feature_msg_ptr->height = 1;
+    path_pub = nh->create_publisher<path_ros>("path", 10);
+    nh->declare_parameter("fixed_frame_id", "world");
+    nh->get_parameter("fixed_frame_id", fixed_frame_id);
+    nh->declare_parameter("child_frame_id", "robot");
+    nh->get_parameter("child_frame_id", child_frame_id);
 
     return true;
 }
@@ -157,7 +151,7 @@ bool System::initialize() {
 
 // Push imu msg into the buffer.
 void System::imuCallback(const imu_ros_ptr& msg) {
-    imu_msg_buffer.push_back(ImuData(msg->header.stamp.toSec(),
+    imu_msg_buffer.push_back(ImuData(Stamp2Sec(msg->header),
             msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z,
             msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z));
 }
@@ -169,12 +163,11 @@ void System::imageCallback(const image_ros_ptr& msg) {
     if (imu_msg_buffer.empty()) {
         return;
     }
-
     cv_bridge::CvImageConstPtr cvCPtr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
     larvio::ImageDataPtr msgPtr(new ImgData);
-    msgPtr->timeStampToSec = cvCPtr->header.stamp.toSec();
+    msgPtr->timeStampToSec = Stamp2Sec(cvCPtr->header);
     msgPtr->image = cvCPtr->image.clone();
-    std_msgs::Header header = cvCPtr->header;
+    header_ros header = cvCPtr->header;
 
     // Decide if use img msg in buffer.
     bool bUseBuff = false;
@@ -262,32 +255,37 @@ void System::publishVIO(const time_ros& time) {
     Eigen::Vector3d body_velocity = Estimator->getVel();
     Matrix<double, 6, 6> P_body_pose = Estimator->getPpose();
     Matrix3d P_body_vel = Estimator->getPvel();
-    tf::poseEigenToMsg(T_b_w, odom_msg.pose.pose);
-    tf::vectorEigenToMsg(body_velocity, odom_msg.twist.twist.linear);
-    for (int i = 0; i < 6; ++i) {
-        for (int j = 0; j < 6; ++j) {
-            odom_msg.pose.covariance[6*i+j] = P_body_pose(i, j);
-        }
-    }
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            odom_msg.twist.covariance[i*6+j] = P_body_vel(i, j);
-        }
-    }
+
+    odom_msg.pose.pose.position.x = T_b_w.translation().x();
+    odom_msg.pose.pose.position.y = T_b_w.translation().y();
+    odom_msg.pose.pose.position.z = T_b_w.translation().z();
+    
+    // 提取旋转（四元数）
+    Eigen::Quaterniond q(T_b_w.rotation());
+    odom_msg.pose.pose.orientation.w = q.w();
+    odom_msg.pose.pose.orientation.x = q.x();
+    odom_msg.pose.pose.orientation.y = q.y();
+    odom_msg.pose.pose.orientation.z = q.z();
+
+    odom_msg.twist.twist.linear.x = body_velocity.x();
+    odom_msg.twist.twist.linear.y = body_velocity.y();
+    odom_msg.twist.twist.linear.z = body_velocity.z();
 
     // construct path msg
     path_msg.header.stamp = time;
     path_msg.header.frame_id = fixed_frame_id;
-    geometry_msgs::PoseStamped curr_path;
+    geometry_ros curr_path;
     curr_path.header.stamp = time;
     curr_path.header.frame_id = fixed_frame_id;
-    tf::poseEigenToMsg(T_b_w, curr_path.pose);
+    curr_path.pose = odom_msg.pose.pose;
     path_msg.poses.push_back(curr_path);
 
     // construct point cloud msg
-    // Publish the 3D positions of the features.
-    // Including stable and active ones.
-    // --Stable features
+    // Stable features
+    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    stable_feature_msg_ptr->header.stamp = pcl_conversions::toPCL(time);
+    stable_feature_msg_ptr->height = 1;
     std::map<larvio::FeatureIDType,Eigen::Vector3d> StableMapPoints;
     Estimator->getStableMapPointPositions(StableMapPoints);
     for (const auto& item : StableMapPoints) {
@@ -296,11 +294,12 @@ void System::publishVIO(const time_ros& time) {
                 feature_position(0), feature_position(1), feature_position(2)));
     }
     stable_feature_msg_ptr->width = stable_feature_msg_ptr->points.size();
-    // --Active features
-    active_feature_msg_ptr.reset(
-        new pcl::PointCloud<pcl::PointXYZ>());
+    // Active features
+    active_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
     active_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    active_feature_msg_ptr->header.stamp = pcl_conversions::toPCL(time);
     active_feature_msg_ptr->height = 1;
+
     std::map<larvio::FeatureIDType,Eigen::Vector3d> ActiveMapPoints;
     Estimator->getActiveeMapPointPositions(ActiveMapPoints);
     for (const auto& item : ActiveMapPoints) {
@@ -310,10 +309,21 @@ void System::publishVIO(const time_ros& time) {
     }
     active_feature_msg_ptr->width = active_feature_msg_ptr->points.size();
 
-    odom_pub.publish(odom_msg);
-    stable_feature_pub.publish(stable_feature_msg_ptr);
-    active_feature_pub.publish(active_feature_msg_ptr);
-    path_pub.publish(path_msg);
+    pcl_ros stable_cloud_msg;
+    pcl::toROSMsg(*stable_feature_msg_ptr, stable_cloud_msg);
+    stable_cloud_msg.header.stamp = time;
+    stable_cloud_msg.header.frame_id = fixed_frame_id;
+    
+    pcl_ros active_cloud_msg;
+    pcl::toROSMsg(*active_feature_msg_ptr, active_cloud_msg);
+    active_cloud_msg.header.stamp = time;
+    active_cloud_msg.header.frame_id = fixed_frame_id;
+    
+    // 发布消息
+    stable_feature_pub->publish(stable_cloud_msg);
+    active_feature_pub->publish(active_cloud_msg);
+    odom_pub->publish(odom_msg);
+    path_pub->publish(path_msg);
 }
 
 } // end namespace larvio

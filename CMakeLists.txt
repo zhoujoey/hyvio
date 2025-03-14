@@ -1,60 +1,42 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.8)
 project(larvio)
 
 set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_STANDARD 14)
 
-set( CMAKE_CXX_STANDARD 14)
-
-add_definitions(-DROS1)
+add_definitions(-DROS2)
 # Modify cmake module path if new .cmake files are required
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake_ros")
 
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    tf
-    nav_msgs
-    sensor_msgs
-    geometry_msgs
-    eigen_conversions
-    tf_conversions
-    nodelet
-    image_transport
-    cv_bridge
-    message_filters
-    pcl_conversions
-    pcl_ros
-    std_srvs
-)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED) 
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(pcl_ros REQUIRED)
+find_package(std_srvs REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(SuiteSparse REQUIRED)
 find_package(Ceres REQUIRED)
-
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-    INCLUDE_DIRS include 
-    LIBRARIES system_manager estimator image_processor
-    CATKIN_DEPENDS
-        roscpp std_msgs tf nav_msgs sensor_msgs geometry_msgs
-        eigen_conversions tf_conversions message_runtime
-        image_transport cv_bridge message_filters pcl_conversions
-        pcl_ros std_srvs
-    DEPENDS Boost EIGEN3 OpenCV SUITESPARSE
-)
-
+find_package(Eigen3 REQUIRED)
+find_package(tf2_ros REQUIRED)
 ###########
 ## Build ##
 ###########
 
 include_directories(
     include
-    ${catkin_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${Boost_INCLUDE_DIR}
     ${OpenCV_INCLUDE_DIRS}
@@ -112,43 +94,45 @@ target_link_libraries(estimator glog
     ${OpenCV_LIBRARIES}
 )
 
-# System Manger
+# System Manager
 add_library(system_manager
     src/System.cpp
     src/larvio.cpp
     src/image_processor.cpp
     src/feature_manager.cpp
 )
-add_dependencies(system_manager
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
+ament_target_dependencies(system_manager
+    rclcpp
+    std_msgs
+    tf2
+    tf2_ros
+    nav_msgs
+    sensor_msgs
+    geometry_msgs
+    Eigen3
+    tf2_eigen
+    tf2_ros
+    image_transport
+    cv_bridge
+    message_filters
+    pcl_conversions
+    pcl_ros
+    std_srvs
 )
 target_link_libraries(system_manager glog
-    image_processor estimator
-    ${catkin_LIBRARIES}
-)
-
-# System Manager nodelet
-add_library(system_manager_nodelet
-    src/ros1_nodelet.cpp
-)
-add_dependencies(system_manager_nodelet
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(system_manager_nodelet glog
-    system_manager
-    ${catkin_LIBRARIES}
+    image_processor 
+    estimator
 )
 
 # Add executable target
 add_executable(larvio_node
     src/main.cpp
 )
-
+ament_target_dependencies(larvio_node
+    rclcpp
+)
 target_link_libraries(larvio_node
     system_manager
-    ${catkin_LIBRARIES}
     glog
 )
 
@@ -157,17 +141,21 @@ target_link_libraries(larvio_node
 #############
 
 install(TARGETS
-  image_processor estimator system_manager system_manager_nodelet
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    image_processor 
+    estimator 
+    system_manager
+    larvio_node
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  PATTERN "*_nodelet.h" EXCLUDE
+    DESTINATION include/${PROJECT_NAME}
 )
 
-install(FILES nodelets.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY launch config rviz
+    DESTINATION share/${PROJECT_NAME}
 )
+
+ament_package()

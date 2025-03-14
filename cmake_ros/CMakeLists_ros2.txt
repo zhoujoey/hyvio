@@ -16,7 +16,6 @@ find_package(tf2_ros REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(eigen REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
@@ -27,11 +26,11 @@ find_package(std_srvs REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(SuiteSparse REQUIRED)
 find_package(Ceres REQUIRED)
-
+find_package(Eigen3 REQUIRED)
+find_package(tf2_ros REQUIRED)
 ###########
 ## Build ##
 ###########
@@ -110,8 +109,9 @@ ament_target_dependencies(system_manager
     nav_msgs
     sensor_msgs
     geometry_msgs
-    eigen
+    Eigen3
     tf2_eigen
+    tf2_ros
     image_transport
     cv_bridge
     message_filters
@@ -152,6 +152,10 @@ install(TARGETS
 
 install(DIRECTORY include/${PROJECT_NAME}/
     DESTINATION include/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch config rviz
+    DESTINATION share/${PROJECT_NAME}
 )
 
 ament_package()
