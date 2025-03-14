@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Odometry1/Shape1
+        - /Odometry1/Covariance1
       Splitter Ratio: 0.5
     Tree Height: 1074
   - Class: rviz_common/Selection
@@ -24,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: point-map
 Visualization Manager:
   Class: ""
   Displays:
@@ -92,12 +94,12 @@ Visualization Manager:
           Value: true
         Value: true
       Enabled: true
-      Keep: 100
+      Keep: 1
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Shape:
         Alpha: 1
-        Axes Length: 1
+        Axes Length: 0.30000001192092896
         Axes Radius: 0.10000000149011612
         Color: 255; 25; 0
         Head Length: 0.30000001192092896
@@ -138,14 +140,14 @@ Visualization Manager:
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 0
+      Decay Time: 1000
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: point-map
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
@@ -164,8 +166,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 2.2243974208831787
-        Min Value: -4.692356109619141
+        Max Value: -9999
+        Min Value: 9999
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -179,7 +181,7 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: active-point
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
@@ -241,25 +243,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 62.01140594482422
+      Distance: 72.1926040649414
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.9680747985839844
-        Y: 3.565795421600342
-        Z: 13.867594718933105
+        X: -2.287522792816162
+        Y: -1.6806014776229858
+        Z: 5.836166858673096
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.585098385810852
+      Pitch: 1.175097942352295
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 2.6041417121887207
+      Yaw: 4.6791582107543945
     Saved: ~
 Window Geometry:
   Displays:

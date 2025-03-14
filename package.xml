@@ -1,43 +1,41 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
 
   <name>larvio</name>
   <version>0.0.1</version>
   <description>Lightweight Accurate and Robust VIO based on MSCKF</description>
 
-  <maintainer email="ares43490@126.com">PetWorm</maintainer>
+  <maintainer email="zhouwei@anqingxinkai.com">zhouwei</maintainer>
 
   <license>TODO</license>
 
-  <author email="ares43490@126.com">PetWorm</author>
+  <author email="zhouwei@anqingxinkai.com">zhouwei</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>tf</depend>
+  <depend>tf2_ros</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>eigen_conversions</depend>
-  <depend>tf_conversions</depend>
-  <depend>nodelet</depend>
+  <depend>eigen</depend>
+  <depend>tf2_eigen</depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
   <depend>message_filters</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
   <depend>std_srvs</depend>
-  <exec_depend>message_runtime</exec_depend>
 
   <depend>libpcl-all-dev</depend>
-  <depend>libpcl-all</depend>
   <depend>suitesparse</depend>
 
-  <test_depend>rosunit</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
-    <nodelet plugin="${prefix}/nodelets.xml"/>
+    <build_type>ament_cmake</build_type>
   </export>
 
 </package>

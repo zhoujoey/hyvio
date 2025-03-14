@@ -113,9 +113,6 @@ bool System::createRosIO() {
     nh->get_parameter("fixed_frame_id", fixed_frame_id);
     nh->declare_parameter("child_frame_id", "robot");
     nh->get_parameter("child_frame_id", child_frame_id);
-    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
-    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
-    stable_feature_msg_ptr->height = 1;
 
     return true;
 }
@@ -288,7 +285,9 @@ void System::publishVIO(const time_ros& time) {
     // construct point cloud msg
     // Publish the 3D positions of the features.
     // Including stable and active ones.
-    // --Stable features
+    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    stable_feature_msg_ptr->height = 1;
     std::map<larvio::FeatureIDType,Eigen::Vector3d> StableMapPoints;
     Estimator->getStableMapPointPositions(StableMapPoints);
     for (const auto& item : StableMapPoints) {
