@@ -63,7 +63,9 @@ bool System::createRosIO() {
 
     nh.param<string>("fixed_frame_id", fixed_frame_id, "world");
     nh.param<string>("child_frame_id", child_frame_id, "odom");
-
+    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    stable_feature_msg_ptr->height = 1;
     return true;
 }
 #else
@@ -111,6 +113,9 @@ bool System::createRosIO() {
     nh->get_parameter("fixed_frame_id", fixed_frame_id);
     nh->declare_parameter("child_frame_id", "robot");
     nh->get_parameter("child_frame_id", child_frame_id);
+    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
+    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
+    stable_feature_msg_ptr->height = 1;
 
     return true;
 }
@@ -281,11 +286,9 @@ void System::publishVIO(const time_ros& time) {
     path_msg.poses.push_back(curr_path);
 
     // construct point cloud msg
-    // Stable features
-    stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
-    stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
-    stable_feature_msg_ptr->header.stamp = pcl_conversions::toPCL(time);
-    stable_feature_msg_ptr->height = 1;
+    // Publish the 3D positions of the features.
+    // Including stable and active ones.
+    // --Stable features
     std::map<larvio::FeatureIDType,Eigen::Vector3d> StableMapPoints;
     Estimator->getStableMapPointPositions(StableMapPoints);
     for (const auto& item : StableMapPoints) {
@@ -294,12 +297,10 @@ void System::publishVIO(const time_ros& time) {
                 feature_position(0), feature_position(1), feature_position(2)));
     }
     stable_feature_msg_ptr->width = stable_feature_msg_ptr->points.size();
-    // Active features
+    // --Active features
     active_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
     active_feature_msg_ptr->header.frame_id = fixed_frame_id;
-    active_feature_msg_ptr->header.stamp = pcl_conversions::toPCL(time);
     active_feature_msg_ptr->height = 1;
-
     std::map<larvio::FeatureIDType,Eigen::Vector3d> ActiveMapPoints;
     Estimator->getActiveeMapPointPositions(ActiveMapPoints);
     for (const auto& item : ActiveMapPoints) {
@@ -318,10 +319,10 @@ void System::publishVIO(const time_ros& time) {
     pcl::toROSMsg(*active_feature_msg_ptr, active_cloud_msg);
     active_cloud_msg.header.stamp = time;
     active_cloud_msg.header.frame_id = fixed_frame_id;
-    
-    // 发布消息
+
     stable_feature_pub->publish(stable_cloud_msg);
     active_feature_pub->publish(active_cloud_msg);
+
     odom_pub->publish(odom_msg);
     path_pub->publish(path_msg);
 }

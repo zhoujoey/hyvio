@@ -3,7 +3,9 @@ Panels:
     Help Height: 138
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /Map Points1
+        - /Active Points1
       Splitter Ratio: 0.5
     Tree Height: 871
   - Class: rviz/Selection
@@ -128,19 +130,19 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 0
+      Decay Time: 10000
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 255; 255; 255
       Name: Map Points
       Position Transformer: XYZ
-      Queue Size: 1
+      Queue Size: 10000
       Selectable: true
       Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /vio/active_feature_point_cloud
+      Topic: /stable_feature_point_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: false
@@ -168,7 +170,7 @@ Visualization Manager:
       Size (Pixels): 5
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /vio/stable_feature_point_cloud
+      Topic: /active_feature_point_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -213,7 +215,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 34.122703552246094
+      Distance: 18.366079330444336
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -221,17 +223,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -1.1312587261199951
+        Y: -1.8535457849502563
+        Z: 1.0837297439575195
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8797968626022339
+      Pitch: 0.799796998500824
       Target Frame: <Fixed Frame>
-      Yaw: 0.03542320430278778
+      Yaw: 0.02042343094944954
     Saved: ~
 Window Geometry:
   Displays:
@@ -251,5 +253,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 3208
-  X: 152
-  Y: 54
+  X: 975
+  Y: 422

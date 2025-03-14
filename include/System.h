@@ -44,10 +44,10 @@ private:
 
     // Publishers.
     image_transport::Publisher vis_img_pub;
-    ros::Publisher odom_pub;
-    ros::Publisher stable_feature_pub;
-    ros::Publisher active_feature_pub;
-    ros::Publisher path_pub;
+    std::shared_ptr<ros::Publisher> odom_pub;
+    std::shared_ptr<ros::Publisher> stable_feature_pub;
+    std::shared_ptr<ros::Publisher> active_feature_pub;
+    std::shared_ptr<ros::Publisher> path_pub;
     // Msgs to be published.
     std::vector<header_ros> header_buffer;    // buffer for heads of msgs to be published
 
