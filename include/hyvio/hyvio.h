@@ -6,10 +6,10 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Tremendous changes have been made to use it in LARVIO
+// Tremendous changes have been made to use it in HYVIO
 
-#ifndef LARVIO_H
-#define LARVIO_H
+#ifndef HYVIO_H
+#define HYVIO_H
 
 #include <map>
 #include <set>
@@ -21,7 +21,7 @@
 #include <glog/logging.h>
 #include "imu_state.h"
 #include "feature.hpp"
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 
 #include <fstream>
 #include <Eigen/StdVector>
@@ -32,20 +32,20 @@
 
 #include "sensors/ImuData.hpp"
 
-namespace larvio {
+namespace hyvio {
 
-class LarVio {
+class HyVio {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     // Constructor
-    LarVio(std::string& config_file_);
+    HyVio(std::string& config_file_);
     // Disable copy and assign constructor
-    LarVio(const LarVio&) = delete;
-    LarVio operator=(const LarVio&) = delete;
+    HyVio(const HyVio&) = delete;
+    HyVio operator=(const HyVio&) = delete;
 
     // Destructor
-    ~LarVio();
+    ~HyVio();
 
     /*
      * @brief initialize Initialize the VIO.
@@ -83,11 +83,11 @@ class LarVio {
     void getSwPoses(vector<Eigen::Isometry3d>& swPoses);
 
     // Get position of map points
-    void getStableMapPointPositions(std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints);
-    void getActiveeMapPointPositions(std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints);
+    void getStableMapPointPositions(std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints);
+    void getActiveeMapPointPositions(std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints);
 
-    typedef boost::shared_ptr<LarVio> Ptr;
-    typedef boost::shared_ptr<const LarVio> ConstPtr;
+    typedef boost::shared_ptr<HyVio> Ptr;
+    typedef boost::shared_ptr<const HyVio> ConstPtr;
 
   private:
     /*
@@ -418,9 +418,9 @@ class LarVio {
     void rmUselessNuisanceState();
 };
 
-typedef LarVio::Ptr LarVioPtr;
-typedef LarVio::ConstPtr LarVioConstPtr;
+typedef HyVio::Ptr HyVioPtr;
+typedef HyVio::ConstPtr HyVioConstPtr;
 
-} // namespace larvio
+} // namespace hyvio
 
 #endif

@@ -6,7 +6,7 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Several changes have been made to use it in LARVIO
+// Several changes have been made to use it in HYVIO
 
 
 #ifndef FEATURE_HPP
@@ -23,7 +23,7 @@
 #include "math_utils.hpp"
 #include "imu_state.h"
 
-namespace larvio {
+namespace hyvio {
 
 /*
  * @brief Feature Salient part of an image. Please refer
@@ -915,6 +915,6 @@ double Feature::getTotalObsChange() {
   return diff;
 }
 
-} // namespace larvio
+} // namespace hyvio
 
 #endif // FEATURE_HPP

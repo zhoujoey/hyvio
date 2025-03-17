@@ -1,6 +1,6 @@
 <library path="lib/libsystem_manager_nodelet">
-  <class name="larvio/Ros1Nodelet"
-         type="larvio::Ros1Nodelet"
+  <class name="hyvio/Ros1Nodelet"
+         type="hyvio::Ros1Nodelet"
          base_class_type="nodelet::Nodelet">
     <description>
       System manager nodelet for organize the visual

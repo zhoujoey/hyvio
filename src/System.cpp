@@ -15,7 +15,7 @@ using namespace std;
 using namespace cv;
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 System::System(node_ros& n) : nh(n) {}
 
@@ -129,7 +129,7 @@ bool System::initialize() {
 
     // Set pointers of image processer and estimator.
     ImgProcesser.reset(new ImageProcessor(config_file));
-    Estimator.reset(new LarVio(config_file));
+    Estimator.reset(new HyVio(config_file));
 
     // Initialize image processer and estimator.
     if (!ImgProcesser->initialize()) {
@@ -166,7 +166,7 @@ void System::imageCallback(const image_ros_ptr& msg) {
         return;
     }
     cv_bridge::CvImageConstPtr cvCPtr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-    larvio::ImageDataPtr msgPtr(new ImgData);
+    hyvio::ImageDataPtr msgPtr(new ImgData);
     msgPtr->timeStampToSec = Stamp2Sec(cvCPtr->header);
     msgPtr->image = cvCPtr->image.clone();
     header_ros header = cvCPtr->header;
@@ -288,7 +288,7 @@ void System::publishVIO(const time_ros& time) {
     stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
     stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
     stable_feature_msg_ptr->height = 1;
-    std::map<larvio::FeatureIDType,Eigen::Vector3d> StableMapPoints;
+    std::map<hyvio::FeatureIDType,Eigen::Vector3d> StableMapPoints;
     Estimator->getStableMapPointPositions(StableMapPoints);
     for (const auto& item : StableMapPoints) {
         const auto& feature_position = item.second;
@@ -300,7 +300,7 @@ void System::publishVIO(const time_ros& time) {
     active_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
     active_feature_msg_ptr->header.frame_id = fixed_frame_id;
     active_feature_msg_ptr->height = 1;
-    std::map<larvio::FeatureIDType,Eigen::Vector3d> ActiveMapPoints;
+    std::map<hyvio::FeatureIDType,Eigen::Vector3d> ActiveMapPoints;
     Estimator->getActiveeMapPointPositions(ActiveMapPoints);
     for (const auto& item : ActiveMapPoints) {
         const auto& feature_position = item.second;
@@ -326,4 +326,4 @@ void System::publishVIO(const time_ros& time) {
     path_pub->publish(path_msg);
 }
 
-} // end namespace larvio
+} // end namespace hyvio

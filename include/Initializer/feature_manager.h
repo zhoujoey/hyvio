@@ -16,10 +16,10 @@ using namespace std;
 #include <Eigen/Dense>
 using namespace Eigen;
 
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 
 
-namespace larvio {
+namespace hyvio {
 
 const int WINDOW_SIZE = 10;
 const double MIN_PARALLAX = 10/460;

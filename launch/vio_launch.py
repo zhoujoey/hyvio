@@ -13,12 +13,12 @@ def generate_launch_description():
     )
 
     # Get package share directory
-    pkg_dir = get_package_share_directory('larvio')
+    pkg_dir = get_package_share_directory('hyvio')
     
     # Create nodes
     vio_node = Node(
-        package='larvio',
-        executable='larvio_node',
+        package='hyvio',
+        executable='hyvio_node',
         name='vio',
         output='screen',
         parameters=[{

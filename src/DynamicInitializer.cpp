@@ -5,7 +5,7 @@
 //
 
 #include "Initializer/DynamicInitializer.h"
-#include "larvio/math_utils.hpp"
+#include "hyvio/math_utils.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -16,7 +16,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 bool DynamicInitializer::tryDynInit(const std::vector<ImuData>& imu_msg_buffer,
         MonoCameraMeasurementPtr img_msg) {

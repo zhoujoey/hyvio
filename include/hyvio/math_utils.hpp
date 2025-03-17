@@ -6,7 +6,7 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Some changes have been made to use it in LARVIO
+// Some changes have been made to use it in HYVIO
 
 #ifndef MATH_UTILS_HPP
 #define MATH_UTILS_HPP
@@ -14,7 +14,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <glog/logging.h>
-namespace larvio {
+namespace hyvio {
 
 /*
  *  @brief Create a skew-symmetric matrix from a 3-element vector.
@@ -232,6 +232,6 @@ inline Eigen::Vector4d rotationToQuaternion(
   return q;
 }
 
-} // end namespace larvio
+} // end namespace hyvio
 
 #endif // MATH_UTILS_HPP

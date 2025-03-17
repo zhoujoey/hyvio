@@ -10,7 +10,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <System.h>
 
-namespace larvio {
+namespace hyvio {
     class Ros1Nodelet : public nodelet::Nodelet {
     public:
         Ros1Nodelet() { return; }
@@ -22,6 +22,6 @@ namespace larvio {
         virtual void onInit();
         SystemPtr system_ptr;
     };
-} // end namespace larvio
+} // end namespace hyvio
 
 #endif  //SYSTEM_NODELET_H

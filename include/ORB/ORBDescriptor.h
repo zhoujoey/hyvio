@@ -13,7 +13,7 @@
 #include <glog/logging.h>
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 class ORBdescriptor     // this class is created by QXC based on ORB_SLAM2::ORBextractor
 {

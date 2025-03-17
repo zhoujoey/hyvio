@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(larvio)
+project(hyvio)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_STANDARD 14)
@@ -86,7 +86,7 @@ target_link_libraries(flexibleInitializer glog
 
 # Estimator
 add_library(estimator
-    src/larvio.cpp
+    src/hyvio.cpp
 )
 target_link_libraries(estimator glog
     flexibleInitializer
@@ -97,7 +97,7 @@ target_link_libraries(estimator glog
 # System Manager
 add_library(system_manager
     src/System.cpp
-    src/larvio.cpp
+    src/hyvio.cpp
     src/image_processor.cpp
     src/feature_manager.cpp
 )
@@ -125,13 +125,13 @@ target_link_libraries(system_manager glog
 )
 
 # Add executable target
-add_executable(larvio_node
+add_executable(hyvio_node
     src/main.cpp
 )
-ament_target_dependencies(larvio_node
+ament_target_dependencies(hyvio_node
     rclcpp
 )
-target_link_libraries(larvio_node
+target_link_libraries(hyvio_node
     system_manager
     glog
 )
@@ -144,7 +144,7 @@ install(TARGETS
     image_processor 
     estimator 
     system_manager
-    larvio_node
+    hyvio_node
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION lib/${PROJECT_NAME}

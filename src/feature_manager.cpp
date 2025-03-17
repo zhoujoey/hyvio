@@ -6,7 +6,7 @@
 
 #include "Initializer/feature_manager.h"
 
-namespace larvio {
+namespace hyvio {
 
 
 int FeaturePerId::endFrame()

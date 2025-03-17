@@ -189,7 +189,7 @@ namespace cv {
 }
 
 
-namespace larvio {
+namespace hyvio {
 
 bool MotionEstimator::solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &corres, Matrix3d &Rotation, Vector3d &Translation)
 {

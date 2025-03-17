@@ -13,11 +13,11 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 #include <glog/logging.h>
-#include <larvio/math_utils.hpp>
+#include <hyvio/math_utils.hpp>
 #include <glog/logging.h>
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 static Vector3d Gravity = Vector3d(0, 0, 9.81);
 

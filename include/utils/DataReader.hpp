@@ -16,7 +16,7 @@
 
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 struct ImgInfo {
 	double timeStampToSec;

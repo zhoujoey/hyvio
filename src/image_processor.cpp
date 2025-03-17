@@ -6,15 +6,15 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Tremendous changes have been done to use it in LARVIO
+// Tremendous changes have been done to use it in HYVIO
 
 #include <iostream>
 #include <algorithm>
 #include <set>
 #include <Eigen/Dense>
 
-#include <larvio/image_processor.h>
-#include <larvio/math_utils.hpp>
+#include <hyvio/image_processor.h>
+#include <hyvio/math_utils.hpp>
 
 #include <opencv2/core/utility.hpp>
 
@@ -22,7 +22,7 @@ using namespace std;
 using namespace cv;
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 
 ImageProcessor::ImageProcessor(std::string& config_file_) :
@@ -1165,4 +1165,4 @@ void ImageProcessor::publish() {
     return;
 }
 
-} // end namespace larvio
+} // end namespace hyvio

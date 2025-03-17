@@ -5,8 +5,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include <larvio/image_processor.h>
-#include <larvio/larvio.h>
+#include <hyvio/image_processor.h>
+#include <hyvio/hyvio.h>
 #include <glog/logging.h>
 #include "sensors/ImuData.hpp"
 #include "sensors/ImageData.hpp"

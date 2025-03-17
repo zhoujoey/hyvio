@@ -11,7 +11,7 @@
 #include "Eigen/Core"
 #include "Eigen/Dense"
 
-namespace larvio {
+namespace hyvio {
 
 struct ImuData {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

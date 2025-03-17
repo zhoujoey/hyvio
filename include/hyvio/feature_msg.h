@@ -9,7 +9,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <glog/logging.h>
-namespace larvio {
+namespace hyvio {
 
     // Measurement for one features
     class MonoFeatureMeasurement {

@@ -19,7 +19,7 @@ using namespace std;
 using namespace Eigen;
 
 
-namespace larvio {
+namespace hyvio {
 
 class MotionEstimator
 {

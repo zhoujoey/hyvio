@@ -6,7 +6,7 @@
 
 #include "Initializer/initial_sfm.h"
 
-namespace larvio {
+namespace hyvio {
 
 GlobalSFM::GlobalSFM(){}
 

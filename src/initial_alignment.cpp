@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-namespace larvio {
+namespace hyvio {
 
 
 void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs)

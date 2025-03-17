@@ -14,15 +14,15 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 #include <glog/logging.h>
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 
-#include "larvio/imu_state.h"
+#include "hyvio/imu_state.h"
 
 #include "sensors/ImuData.hpp"
 
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 class StaticInitializer
 {
@@ -107,7 +107,7 @@ private:
         const std::vector<ImuData>& imu_msg_buffer);
 };
 
-} // namespace larvio
+} // namespace hyvio
 
 
 #endif //STATIC_INITIALIZER_H

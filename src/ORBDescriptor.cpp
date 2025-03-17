@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 const int ORBdescriptor::TH_HIGH = 100;
 const int ORBdescriptor::TH_LOW = 50;

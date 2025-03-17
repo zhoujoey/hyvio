@@ -14,14 +14,14 @@
 #include "Initializer/feature_manager.h"
 #include <map>
 #include <glog/logging.h>
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 
 #include <boost/shared_ptr.hpp>
 
 using namespace Eigen;
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 class ImageFrame
 {

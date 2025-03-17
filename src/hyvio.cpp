@@ -6,7 +6,7 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Tremendous changes have been made to use it in LARVIO
+// Tremendous changes have been made to use it in HYVIO
 
 #include <iostream>
 #include <iomanip>
@@ -19,15 +19,15 @@
 #include <Eigen/SPQRSupport>
 #include <boost/math/distributions/chi_squared.hpp>
 
-#include <larvio/larvio.h>
-#include <larvio/math_utils.hpp>
+#include <hyvio/hyvio.h>
+#include <hyvio/math_utils.hpp>
 
 #include <opencv2/core/utility.hpp>
 
 using namespace std;
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 // Static member variables in IMUState class.
 StateIDType IMUState::next_id = 0;
@@ -39,7 +39,7 @@ FeatureIDType Feature::next_id = 0;
 Feature::OptimizationConfig Feature::optimization_config;
 
 
-LarVio::LarVio(std::string& config_file_):
+HyVio::HyVio(std::string& config_file_):
     is_gravity_set(false),
     is_first_img(true),
     config_file(config_file_) {
@@ -47,7 +47,7 @@ LarVio::LarVio(std::string& config_file_):
 }
 
 
-LarVio::~LarVio() {
+HyVio::~HyVio() {
   fImuState.close();
   fTakeOffStamp.close();
 
@@ -55,7 +55,7 @@ LarVio::~LarVio() {
 }
 
 
-bool LarVio::loadParameters() {
+bool HyVio::loadParameters() {
   cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
   if (!fsSettings.isOpened()) {
       LOG(INFO) << "config_file error: cannot open " << config_file << std::endl;
@@ -325,7 +325,7 @@ bool LarVio::loadParameters() {
 }
 
 
-bool LarVio::initialize() {
+bool HyVio::initialize() {
   if (!loadParameters()) {
     return false;
   }
@@ -375,7 +375,7 @@ bool LarVio::initialize() {
 }
 
 
-bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
+bool HyVio::processFeatures(MonoCameraMeasurementPtr msg,
         std::vector<ImuData>& imu_msg_buffer) {
   // features are not utilized until receiving imu msgs ahead
   if (!bFirstFeatures) {
@@ -480,7 +480,7 @@ bool LarVio::processFeatures(MonoCameraMeasurementPtr msg,
 }
 
 
-void LarVio::batchImuProcessing(const double& time_bound,
+void HyVio::batchImuProcessing(const double& time_bound,
       std::vector<ImuData>& imu_msg_buffer) {
   // Counter how many IMU msgs in the buffer are used.
   int used_imu_msg_cntr = 0;
@@ -536,7 +536,7 @@ void LarVio::batchImuProcessing(const double& time_bound,
 }
 
 
-void LarVio::processModel(const double& time,
+void HyVio::processModel(const double& time,
     const Vector3d& m_gyro,
     const Vector3d& m_acc) {
 
@@ -597,7 +597,7 @@ void LarVio::processModel(const double& time,
 }
 
 
-void LarVio::predictNewState(const double& dt,
+void HyVio::predictNewState(const double& dt,
     const Vector3d& gyro,
     const Vector3d& acc) {
 
@@ -668,7 +668,7 @@ void LarVio::predictNewState(const double& dt,
 }
 
 
-// void LarVio::predictNewState_(const double& dt,
+// void HyVio::predictNewState_(const double& dt,
 //     const Eigen::Vector3d& gyro, const Eigen::Vector3d& acc, 
 //     const Eigen::Vector3d& gyro_old, const Eigen::Vector3d& acc_old) {
 
@@ -736,7 +736,7 @@ void LarVio::predictNewState(const double& dt,
 // }
 
 
-void LarVio::stateAugmentation() {
+void HyVio::stateAugmentation() {
 
   const Matrix3d& R_b2c =
       state_server.imu_state.R_imu_cam0;
@@ -820,7 +820,7 @@ void LarVio::stateAugmentation() {
 }
 
 
-void LarVio::addFeatureObservations(
+void HyVio::addFeatureObservations(
     MonoCameraMeasurementPtr msg) {
 
   StateIDType state_id = state_server.imu_state.id;
@@ -875,7 +875,7 @@ void LarVio::addFeatureObservations(
 }
 
 
-void LarVio::measurementJacobian_msckf(
+void HyVio::measurementJacobian_msckf(
         const StateIDType& state_id,
         const FeatureIDType& feature_id,
         Matrix<double, 2, 6>& H_x, Matrix<double, 2, 6>& H_e, 
@@ -940,7 +940,7 @@ void LarVio::measurementJacobian_msckf(
 }
 
 
-void LarVio::featureJacobian_msckf(
+void HyVio::featureJacobian_msckf(
     const FeatureIDType& feature_id,
     const std::vector<StateIDType>& state_ids,
     MatrixXd& H_x, VectorXd& r) {
@@ -1000,7 +1000,7 @@ void LarVio::featureJacobian_msckf(
 }
 
 
-void LarVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
+void HyVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
         const FeatureIDType& feature_id,
         Eigen::Matrix<double, 2, 3>& H_f,
         Eigen::Matrix<double, 2, 6>& H_a,
@@ -1136,7 +1136,7 @@ void LarVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
 }
 
 
-void LarVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
+void HyVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
         const FeatureIDType& feature_id,
         Eigen::Matrix<double, 2, 1>& H_f,
         Eigen::Matrix<double, 2, 6>& H_a,
@@ -1269,7 +1269,7 @@ void LarVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
 }
 
 
-void LarVio::featureJacobian_ekf_new(const FeatureIDType& feature_id,
+void HyVio::featureJacobian_ekf_new(const FeatureIDType& feature_id,
     const std::vector<StateIDType>& state_ids,
     Eigen::MatrixXd& H_x, Eigen::VectorXd& r) {
   
@@ -1363,7 +1363,7 @@ void LarVio::featureJacobian_ekf_new(const FeatureIDType& feature_id,
 }
 
 
-void LarVio::featureJacobian_ekf(const FeatureIDType& feature_id,
+void HyVio::featureJacobian_ekf(const FeatureIDType& feature_id,
     Eigen::MatrixXd& H_x, Eigen::Vector2d& r) {
   
   auto& feature = map_server[feature_id];
@@ -1443,7 +1443,7 @@ void LarVio::featureJacobian_ekf(const FeatureIDType& feature_id,
 }
 
 
-void LarVio::measurementUpdate_msckf(
+void HyVio::measurementUpdate_msckf(
     const MatrixXd& H, const VectorXd& r) {
 
   if (H.rows() == 0 || r.rows() == 0) return;
@@ -1628,7 +1628,7 @@ void LarVio::measurementUpdate_msckf(
 }
 
 
-void LarVio::measurementUpdate_hybrid(
+void HyVio::measurementUpdate_hybrid(
         const Eigen::MatrixXd& H_ekf_new, const Eigen::VectorXd& r_ekf_new, 
         const Eigen::MatrixXd& H_ekf, const Eigen::VectorXd& r_ekf,
         const Eigen::MatrixXd& H_msckf, const Eigen::VectorXd& r_msckf) {
@@ -1888,7 +1888,7 @@ void LarVio::measurementUpdate_hybrid(
 }
 
 
-bool LarVio::gatingTest(
+bool HyVio::gatingTest(
     const MatrixXd& H, const VectorXd& r, const int& dof) {
 
   MatrixXd P1 = H * state_server.state_cov * H.transpose();
@@ -1906,7 +1906,7 @@ bool LarVio::gatingTest(
 }
 
 
-void LarVio::removeLostFeatures() {
+void HyVio::removeLostFeatures() {
   // Remove the features that lost track.
   // BTW, find the size the final Jacobian matrix and residual vector.
   int jacobian_row_size_msckf = 0;
@@ -2282,7 +2282,7 @@ void LarVio::removeLostFeatures() {
 }
 
 
-void LarVio::findRedundantImuStates(
+void HyVio::findRedundantImuStates(
     vector<StateIDType>& rm_state_ids) {
 
   // Move the iterator to the key position.
@@ -2333,7 +2333,7 @@ void LarVio::findRedundantImuStates(
 }
 
 
-void LarVio::pruneImuStateBuffer() {
+void HyVio::pruneImuStateBuffer() {
 
   vector<StateIDType> rm_imu_state_ids(0);
   vector<StateIDType> new_nui_state_ids(0);
@@ -2668,7 +2668,7 @@ void LarVio::pruneImuStateBuffer() {
 
 
 // Get T_b_w
-Eigen::Isometry3d LarVio::getTbw() {
+Eigen::Isometry3d HyVio::getTbw() {
   // Convert the IMU frame to the body frame.
   const IMUState& imu_state = state_server.imu_state;
   Eigen::Isometry3d T_i_w = Eigen::Isometry3d::Identity();
@@ -2685,7 +2685,7 @@ Eigen::Isometry3d LarVio::getTbw() {
 
 
 // Get velocity
-Eigen::Vector3d LarVio::getVel() {
+Eigen::Vector3d HyVio::getVel() {
   const IMUState& imu_state = state_server.imu_state;
   Eigen::Vector3d body_velocity =
           IMUState::T_imu_body.linear() * imu_state.velocity;
@@ -2695,7 +2695,7 @@ Eigen::Vector3d LarVio::getVel() {
 
 
 // Get P_pose
-Eigen::Matrix<double, 6, 6> LarVio::getPpose() {
+Eigen::Matrix<double, 6, 6> HyVio::getPpose() {
   // Convert the covariance.
   Matrix3d P_oo = state_server.state_cov.block<3, 3>(0, 0);   
   Matrix3d P_op = state_server.state_cov.block<3, 3>(0, 6);
@@ -2714,7 +2714,7 @@ Eigen::Matrix<double, 6, 6> LarVio::getPpose() {
 
 
 // Get P_vel
-Eigen::Matrix3d LarVio::getPvel() {
+Eigen::Matrix3d HyVio::getPvel() {
   // Construct the covariance for the velocity.
   Matrix3d P_imu_vel = state_server.state_cov.block<3, 3>(3, 3);  
   Matrix3d H_vel = IMUState::T_imu_body.linear();
@@ -2725,7 +2725,7 @@ Eigen::Matrix3d LarVio::getPvel() {
 
 
 // Get poses of augmented IMU states
-void LarVio::getSwPoses(vector<Eigen::Isometry3d>& swPoses) {
+void HyVio::getSwPoses(vector<Eigen::Isometry3d>& swPoses) {
   swPoses.clear();
   for (auto itr : state_server.imu_states_augment) {
     const auto& imu_state = itr.second;
@@ -2742,14 +2742,14 @@ void LarVio::getSwPoses(vector<Eigen::Isometry3d>& swPoses) {
 
 
 // Get position of stable map points
-void LarVio::getStableMapPointPositions(std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
+void HyVio::getStableMapPointPositions(std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
   for (auto item : lost_slam_features)
     mMapPoints[item.first] = item.second.position;
   lost_slam_features.clear();
 }
 
 
-void LarVio::getActiveeMapPointPositions(std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
+void HyVio::getActiveeMapPointPositions(std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
   for (auto item : active_slam_features)
     mMapPoints[item.first] = item.second.position;
   active_slam_features.clear();
@@ -2757,7 +2757,7 @@ void LarVio::getActiveeMapPointPositions(std::map<larvio::FeatureIDType,Eigen::V
 
 
 // added by QXC: reset First Estimate Point to current estimate
-void LarVio::resetFejPoint () {
+void HyVio::resetFejPoint () {
   // reset FEJ of current imu state
   state_server.imu_state_FEJ_now = state_server.imu_state;
 
@@ -2774,7 +2774,7 @@ void LarVio::resetFejPoint () {
 
 
 // check if need ZUPT, added by QXC
-bool LarVio::checkZUPT () {
+bool HyVio::checkZUPT () {
   if ( coarse_feature_dis.empty()
       || coarse_feature_dis.size()<20 ) {  
     list<double>().swap(coarse_feature_dis);
@@ -2814,7 +2814,7 @@ bool LarVio::checkZUPT () {
 }
 
 
-void LarVio::measurementUpdate_ZUPT_vpq () {
+void HyVio::measurementUpdate_ZUPT_vpq () {
   // ZUPT measurement Jacobian
   const int N = state_server.imu_states_augment.size();
   MatrixXd H = MatrixXd::Zero(9, state_server.state_cov.cols());
@@ -2988,7 +2988,7 @@ void LarVio::measurementUpdate_ZUPT_vpq () {
 }
 
 
-void LarVio::updateFeatureCov_3didp(const FeatureIDType& feature_id,
+void HyVio::updateFeatureCov_3didp(const FeatureIDType& feature_id,
         const StateIDType& old_state_id, const StateIDType& new_state_id) {
   const size_t state_size = state_server.imu_states_augment.size();
   const size_t feature_size = state_server.feature_states.size();
@@ -3148,7 +3148,7 @@ void LarVio::updateFeatureCov_3didp(const FeatureIDType& feature_id,
 }
 
 
-void LarVio::updateFeatureCov_1didp(const FeatureIDType& feature_id,
+void HyVio::updateFeatureCov_1didp(const FeatureIDType& feature_id,
         const StateIDType& old_state_id, const StateIDType& new_state_id) {
   const size_t state_size = state_server.imu_states_augment.size();
   const size_t feature_size = state_server.feature_states.size();
@@ -3319,7 +3319,7 @@ void LarVio::updateFeatureCov_1didp(const FeatureIDType& feature_id,
 }
 
 
-void LarVio::rmLostFeaturesCov(const std::vector<FeatureIDType>& lost_ids) {
+void HyVio::rmLostFeaturesCov(const std::vector<FeatureIDType>& lost_ids) {
   if (lost_ids.empty())
     return;
 
@@ -3374,7 +3374,7 @@ void LarVio::rmLostFeaturesCov(const std::vector<FeatureIDType>& lost_ids) {
 }
 
 
-void LarVio::updateGridMap() {
+void HyVio::updateGridMap() {
   if (0==grid_rows*grid_cols)
     return;
 
@@ -3396,7 +3396,7 @@ void LarVio::updateGridMap() {
 }
 
 
-void LarVio::delRedundantFeatures() {
+void HyVio::delRedundantFeatures() {
   if (0==grid_rows*grid_cols*max_features)
     return;
 
@@ -3418,7 +3418,7 @@ void LarVio::delRedundantFeatures() {
         LOG(INFO) << "AN UNEXPECTED ERROR HAPPENED !" <<std::endl;
     }
     sort(id_num.begin(), id_num.end(),
-          LarVio::compareByObsNum);
+          HyVio::compareByObsNum);
     auto it = id_num.begin();
     for (int j=0; j<v_IDs.size()-max_features;
         ++j, ++it)
@@ -3435,7 +3435,7 @@ void LarVio::delRedundantFeatures() {
 }
 
 
-StateIDType LarVio::getNewAnchorId(Feature& feature, const std::vector<StateIDType>& rmIDs) {
+StateIDType HyVio::getNewAnchorId(Feature& feature, const std::vector<StateIDType>& rmIDs) {
   FeatureIDType id = feature.id;
   Vector3d p_w = feature.position;
 
@@ -3498,7 +3498,7 @@ StateIDType LarVio::getNewAnchorId(Feature& feature, const std::vector<StateIDTy
 }
 
 
-void LarVio::calPhi(Eigen::MatrixXd& Phi, const double& dtime,
+void HyVio::calPhi(Eigen::MatrixXd& Phi, const double& dtime,
         const Eigen::Vector3d& f, const Eigen::Vector3d& w, 
         const Eigen::Vector3d& acc, const Eigen::Vector3d& gyro, 
         const Eigen::Vector3d& f_old, const Eigen::Vector3d& w_old, 
@@ -3826,7 +3826,7 @@ void LarVio::calPhi(Eigen::MatrixXd& Phi, const double& dtime,
 }
 
 
-void LarVio::updateImuMx() {
+void HyVio::updateImuMx() {
   Matrix3d& Tg = state_server.Tg;
   Matrix3d& As = state_server.As;
   Matrix3d& Ma = state_server.Ma;
@@ -3873,7 +3873,7 @@ void LarVio::updateImuMx() {
 }
 
 
-void LarVio::rmUselessNuisanceState() {
+void HyVio::rmUselessNuisanceState() {
   // Pick out nuisance states to be deleted
   vector<StateIDType> rm_ids(0);
   for (int i=0; i<state_server.nui_ids.size(); ++i) {
@@ -3920,5 +3920,5 @@ void LarVio::rmUselessNuisanceState() {
   return;
 }
 
-} // namespace larvio
+} // namespace hyvio
 

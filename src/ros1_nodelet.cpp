@@ -1,7 +1,7 @@
 #ifdef ROS1
 #include <ros1_nodelet.h>
 
-namespace larvio {
+namespace hyvio {
     
 void Ros1Nodelet::onInit() {
     system_ptr.reset(new System(getPrivateNodeHandle()));
@@ -12,8 +12,8 @@ void Ros1Nodelet::onInit() {
     return;
 }
 
-PLUGINLIB_EXPORT_CLASS(larvio::Ros1Nodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(hyvio::Ros1Nodelet, nodelet::Nodelet);
 
-} // end namespace larvio
+} // end namespace hyvio
 
 #endif

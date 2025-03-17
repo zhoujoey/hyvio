@@ -17,14 +17,14 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 
 #include "Initializer/feature_manager.h"
 #include "Initializer/initial_alignment.h"
 #include "Initializer/initial_sfm.h"
 #include "Initializer/solve_5pts.h"
 
-#include "larvio/imu_state.h"
+#include "hyvio/imu_state.h"
 
 #include <iostream>
 
@@ -32,7 +32,7 @@
 
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 class DynamicInitializer
 {

@@ -10,7 +10,7 @@
 #include <common_lib.h>
 
 
-namespace larvio {
+namespace hyvio {
 
 /*
  * @brief Manager of the system.
@@ -116,7 +116,7 @@ private:
     ImageProcessorPtr ImgProcesser;
 
     // Pointer for estimator.
-    LarVioPtr Estimator;
+    HyVioPtr Estimator;
 
     // Directory for config file.
     std::string config_file;
@@ -167,7 +167,7 @@ private:
 typedef System::Ptr SystemPtr;
 typedef System::ConstPtr SystemConstPtr;
 
-} // end namespace larvio
+} // end namespace hyvio
 
 
 #endif  //SYSTEM_H

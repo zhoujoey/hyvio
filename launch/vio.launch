@@ -1,12 +1,12 @@
 <launch>
     <arg name="fixed_frame_id" default="world"/>
-    <node name="vio" pkg="larvio" type="larvio_node" output="screen">
-        <param name="config_file" type="string" value="$(find larvio)/config/euroc.yaml"/>
+    <node name="vio" pkg="hyvio" type="hyvio_node" output="screen">
+        <param name="config_file" type="string" value="$(find hyvio)/config/euroc.yaml"/>
         <param name="fixed_frame_id" value="$(arg fixed_frame_id)"/>
         <param name="child_frame_id" value="odom"/> 
         <remap from="~imu" to="/imu0"/>
         <remap from="~cam0_image" to="/cam0/image_raw"/>
     </node>
 
-    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find larvio)/rviz/vio_ros1.rviz" />
+    <node name="visualization" pkg="rviz" type="rviz" output="log" args="-d $(find hyvio)/rviz/vio_ros1.rviz" />
 </launch>

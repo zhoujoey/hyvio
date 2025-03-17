@@ -11,7 +11,7 @@
 #include "opencv2/core.hpp"
 #include "boost/shared_ptr.hpp"
 
-namespace larvio {
+namespace hyvio {
 
 struct ImgData {
     double timeStampToSec;

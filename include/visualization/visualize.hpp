@@ -10,10 +10,10 @@
 #include <Eigen/Geometry>
 #include <iostream>
 #include <glog/logging.h>
-#include "larvio/imu_state.h"
+#include "hyvio/imu_state.h"
 
 
-namespace larvio {
+namespace hyvio {
 
 namespace visualize {
 
@@ -184,7 +184,7 @@ void DrawSlideWindow(const std::vector<pangolin::OpenGlMatrix>& vPoses_SW) {
 }
 
 
-void DrawActiveMapPoints(const std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
+void DrawActiveMapPoints(const std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
     if (mMapPoints.empty())
         return;
 
@@ -199,7 +199,7 @@ void DrawActiveMapPoints(const std::map<larvio::FeatureIDType,Eigen::Vector3d>& 
 }
 
 
-void DrawStableMapPoints(const std::map<larvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
+void DrawStableMapPoints(const std::map<hyvio::FeatureIDType,Eigen::Vector3d>& mMapPoints) {
     if (mMapPoints.empty())
         return;
 

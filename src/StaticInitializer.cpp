@@ -8,7 +8,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace larvio {
+namespace hyvio {
 
 bool StaticInitializer::tryIncInit(const std::vector<ImuData>& imu_msg_buffer,
     MonoCameraMeasurementPtr img_msg) {

@@ -5,7 +5,7 @@
 
 #include "Initializer/FlexibleInitializer.h"
 
-namespace larvio {
+namespace hyvio {
 
 bool FlexibleInitializer::tryIncInit(std::vector<ImuData>& imu_msg_buffer,
         MonoCameraMeasurementPtr img_msg,

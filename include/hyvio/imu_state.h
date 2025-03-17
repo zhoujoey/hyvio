@@ -6,7 +6,7 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Some changes have been made to use it in LARVIO
+// Some changes have been made to use it in HYVIO
 
 
 #ifndef IMU_STATE_H
@@ -19,7 +19,7 @@
 #include <glog/logging.h>
 #define GRAVITY_ACCELERATION 9.81
 
-namespace larvio {
+namespace hyvio {
 
 typedef long long int FeatureIDType;
 
@@ -147,6 +147,6 @@ typedef std::map<StateIDType, IMUState_Aug, std::less<int>,
         Eigen::aligned_allocator<
         std::pair<const StateIDType, IMUState_Aug> > > IMUStateServer;
 
-} // namespace larvio
+} // namespace hyvio
 
 #endif // IMU_STATE_H

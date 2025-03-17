@@ -6,13 +6,13 @@
  */
 
 // The original file belongs to MSCKF_VIO (https://github.com/KumarRobotics/msckf_vio/)
-// Tremendous changes have been made to use it in LARVIO
+// Tremendous changes have been made to use it in HYVIO
 
 
 #ifndef IMAGE_PROCESSOR_H
 #define IMAGE_PROCESSOR_H
 
-#include <larvio/feature_msg.h>
+#include <hyvio/feature_msg.h>
 #include <glog/logging.h>
 #include <vector>
 #include <map>
@@ -27,7 +27,7 @@
 #include "sensors/ImuData.hpp"
 #include "sensors/ImageData.hpp"
 
-namespace larvio {
+namespace hyvio {
 
 /*
  * @brief ImageProcessor Detects and tracks features
@@ -328,6 +328,6 @@ private:
 typedef ImageProcessor::Ptr ImageProcessorPtr;
 typedef ImageProcessor::ConstPtr ImageProcessorConstPtr;
 
-} // end namespace larvio
+} // end namespace hyvio
 
 #endif

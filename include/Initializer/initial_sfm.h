@@ -22,7 +22,7 @@
 using namespace Eigen;
 using namespace std;
 
-namespace larvio {
+namespace hyvio {
 
 struct SFMFeature
 {
