@@ -8,7 +8,7 @@
 
 
 #include <common_lib.h>
-
+#include "parameters.hpp"
 
 namespace hyvio {
 

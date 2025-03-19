@@ -119,7 +119,7 @@ ament_target_dependencies(system_manager
     pcl_ros
     std_srvs
 )
-target_link_libraries(system_manager glog
+target_link_libraries(system_manager glog yaml-cpp
     image_processor 
     estimator
 )
@@ -133,6 +133,7 @@ ament_target_dependencies(hyvio_node
 )
 target_link_libraries(hyvio_node
     system_manager
+    yaml-cpp
     glog
 )
 

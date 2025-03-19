@@ -21,6 +21,7 @@
 #include <glog/logging.h>
 #include "imu_state.h"
 #include "feature.hpp"
+#include "parameters.hpp"
 #include <hyvio/feature_msg.h>
 
 #include <fstream>
@@ -51,7 +52,7 @@ class HyVio {
      * @brief initialize Initialize the VIO.
      */
     bool initialize();
-
+    bool initializeWithParams(const std::shared_ptr<Parameters> &params);
     /*
      * @brief reset Resets the VIO to initial status.
      */

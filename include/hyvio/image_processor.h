@@ -16,6 +16,7 @@
 #include <glog/logging.h>
 #include <vector>
 #include <map>
+#include <parameters.hpp>
 #include <boost/shared_ptr.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/video.hpp>
@@ -47,6 +48,7 @@ public:
   // Initialize the object.
   bool initialize();
 
+  bool initializeWithParams(const std::shared_ptr<Parameters> &params);
   /*
    * @brief processImage
    *    Processing function for the monocular images.

@@ -125,18 +125,23 @@ bool System::initialize() {
     if (!loadParameters()) {
         return false;
     }
+    std::string config_yaml = "/home/zhouwei/shared_files/ros_wrapper/install/hyvio/share/hyvio/config/euroc_params.yaml";
     LOG(INFO) << "System: Finish loading ROS parameters...";
-
+    auto parameters = std::make_shared<Parameters>();
+    if (!parameters->LoadParamsFromYAML(config_yaml)) {
+        LOG(ERROR) << "LoadParamsFromYAML Failed!";
+        return -1;
+    }
     // Set pointers of image processer and estimator.
     ImgProcesser.reset(new ImageProcessor(config_file));
     Estimator.reset(new HyVio(config_file));
 
     // Initialize image processer and estimator.
-    if (!ImgProcesser->initialize()) {
+    if (!ImgProcesser->initializeWithParams(parameters)) {
         LOG(WARNING) << "Image Processer initialization failed!";
         return false;
     }
-    if (!Estimator->initialize()) {
+    if (!Estimator->initializeWithParams(parameters)) {
         LOG(WARNING) << "Estimator initialization failed!";
         return false;
     }

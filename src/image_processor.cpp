@@ -54,11 +54,9 @@ bool ImageProcessor::loadParameters() {
     processor_config.max_iteration = fsSettings["max_iteration"];
     processor_config.track_precision = fsSettings["track_precision"];
     processor_config.ransac_threshold = fsSettings["ransac_threshold"];
-
     processor_config.max_features_num = fsSettings["max_features_num"];
     processor_config.min_distance = fsSettings["min_distance"];
     processor_config.flag_equalize = (static_cast<int>(fsSettings["flag_equalize"]) ? true : false);
-
     processor_config.pub_frequency = fsSettings["pub_frequency"];
     processor_config.img_rate = fsSettings["img_rate"];
 
@@ -93,25 +91,59 @@ bool ImageProcessor::loadParameters() {
     R_cam_imu = R_imu_cam.t();
     t_cam_imu = -R_imu_cam.t() * t_imu_cam;
 
-    // LOG(INFO) << ".fast_threshold = " << processor_config.fast_threshold << std::endl;
-    // LOG(INFO) << ".patch_size = " << processor_config.patch_size << std::endl;
-    // LOG(INFO) << ".pyramid_levels = " << processor_config.pyramid_levels << std::endl;
-    // LOG(INFO) << ".max_iteration = " << processor_config.max_iteration << std::endl;
-    // LOG(INFO) << ".track_precision = " << processor_config.track_precision << std::endl;
-    // LOG(INFO) << ".ransac_threshold = " << processor_config.ransac_threshold << std::endl;
-    // LOG(INFO) << ".max_features_num = " << processor_config.max_features_num << std::endl;
-    // LOG(INFO) << ".min_distance = " << processor_config.min_distance << std::endl;
-    // LOG(INFO) << ".flag_equalize = " << processor_config.flag_equalize << std::endl;
-    // LOG(INFO) << ".pub_frequency = " << processor_config.pub_frequency << std::endl;
-    // LOG(INFO) << "cam_distortion_model = " << cam_distortion_model << std::endl;
-    // LOG(INFO) << "cam_intrinsics = " << cam_intrinsics << std::endl;
-    // LOG(INFO) << "cam_distortion_coeffs = " << cam_distortion_coeffs << std::endl;
-    // LOG(INFO) << "R_cam_imu = " << R_cam_imu << std::endl;
-    // LOG(INFO) << "t_cam_imu = " << t_cam_imu << std::endl;
-
     return true;
 }
 
+
+bool ImageProcessor::initializeWithParams(const std::shared_ptr<Parameters> &params) {
+    processor_config.fast_threshold = params->fast_threshold;
+    processor_config.patch_size = params->patch_size;
+    processor_config.pyramid_levels = params->pyramid_levels;
+    processor_config.max_iteration = params->max_iteration;
+    processor_config.track_precision = params->track_precision;
+    processor_config.ransac_threshold = params->ransac_threshold;
+    processor_config.max_features_num = params->max_features_num;
+    processor_config.min_distance = params->min_distance;
+    processor_config.flag_equalize = params->flag_equalize;
+    processor_config.pub_frequency = params->pub_frequency;
+    processor_config.img_rate = params->img_rate;
+
+    // 输出配置
+    output_dir = params->output_dir;
+
+    // 相机内参
+    cam_distortion_model = params->distortion_model;
+    cam_resolution[0] = params->cam_resolution[0];
+    cam_resolution[1] = params->cam_resolution[1];
+    cam_intrinsics[0] = params->cam_intrinsics[0];
+    cam_intrinsics[1] = params->cam_intrinsics[1];
+    cam_intrinsics[2] = params->cam_intrinsics[2];
+    cam_intrinsics[3] = params->cam_intrinsics[3];
+    cam_distortion_coeffs[0] = params->cam_distortion_coeffs[0];
+    cam_distortion_coeffs[1] = params->cam_distortion_coeffs[1];
+    cam_distortion_coeffs[2] = params->cam_distortion_coeffs[2];
+    cam_distortion_coeffs[3] = params->cam_distortion_coeffs[3];
+    // Convert Eigen matrix to cv::Mat
+    cv::Mat R_cam_imu_cv(3, 3, CV_64F);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            R_cam_imu_cv.at<double>(i, j) = params->R_cam_imu(i, j);
+        }
+    }
+    R_cam_imu = R_cam_imu_cv;
+    
+    // Convert Eigen vector to cv::Vec3d
+    cv::Vec3d t_cam_imu_cv(params->t_cam_imu(0), params->t_cam_imu(1), params->t_cam_imu(2));
+    t_cam_imu = t_cam_imu_cv;
+
+    // Initialize publish counter
+    pub_counter = 0;
+
+    // Initialize flag for first useful img msg
+    bFirstImg = false;
+
+    return true;
+}
 
 bool ImageProcessor::initialize() {
     if (!loadParameters()) return false;
