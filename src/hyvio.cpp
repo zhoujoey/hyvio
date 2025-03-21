@@ -55,275 +55,6 @@ HyVio::~HyVio() {
 }
 
 
-bool HyVio::loadParameters() {
-  cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
-  if (!fsSettings.isOpened()) {
-      LOG(INFO) << "config_file error: cannot open " << config_file << std::endl;
-      return false;
-  }
-
-  features_rate = fsSettings["pub_frequency"];
-  imu_rate = fsSettings["imu_rate"];
-  imu_img_timeTh = 1/(2*imu_rate);
-
-  position_std_threshold = fsSettings["position_std_threshold"];
-  rotation_threshold = fsSettings["rotation_threshold"];
-  translation_threshold = fsSettings["translation_threshold"];
-  tracking_rate_threshold = fsSettings["tracking_rate_threshold"];
-
-  max_track_len = fsSettings["max_track_len"];
-
-  // Feature optimization parameters
-  Feature::optimization_config.translation_threshold = fsSettings["feature_translation_threshold"];
-
-  // Time threshold for resetting FEJ, in seconds, added by QXC
-  reset_fej_threshold = fsSettings["reset_fej_threshold"];
-
-  // Timestamp synchronization
-  td_input = fsSettings["td"];
-  state_server.td = td_input;
-  estimate_td = (static_cast<int>(fsSettings["estimate_td"]) ? true : false);
-
-  // If estimate extrinsic
-  estimate_extrin = (static_cast<int>(fsSettings["estimate_extrin"]) ? true : false);
-
-  // Noise related parameters
-  imu_gyro_noise = fsSettings["noise_gyro"];
-  imu_acc_noise = fsSettings["noise_acc"];
-  imu_gyro_bias_noise = fsSettings["noise_gyro_bias"];
-  imu_acc_bias_noise = fsSettings["noise_acc_bias"];
-  feature_observation_noise = fsSettings["noise_feature"];  
-
-  // Use variance instead of standard deviation.
-  imu_gyro_noise *= imu_gyro_noise;
-  imu_acc_noise *= imu_acc_noise;
-  imu_gyro_bias_noise *= imu_gyro_bias_noise;
-  imu_acc_bias_noise *= imu_acc_bias_noise;
-  feature_observation_noise *= feature_observation_noise;
-
-  // Noise of ZUPT measurement
-  zupt_noise_v = fsSettings["zupt_noise_v"];
-  zupt_noise_p = fsSettings["zupt_noise_p"];
-  zupt_noise_q = fsSettings["zupt_noise_q"];
-  zupt_noise_v *= zupt_noise_v;
-  zupt_noise_p *= zupt_noise_p;
-  zupt_noise_q *= zupt_noise_q;
-
-  // The initial covariance of orientation and position can be
-  // set to 0. But for velocity, bias and extrinsic parameters,
-  // there should be nontrivial uncertainty.
-  double orientation_cov, position_cov, velocity_cov, gyro_bias_cov, acc_bias_cov;
-  orientation_cov = fsSettings["initial_covariance_orientation"];
-  position_cov = fsSettings["initial_covariance_position"];
-  velocity_cov = fsSettings["initial_covariance_velocity"];
-  gyro_bias_cov = fsSettings["initial_covariance_gyro_bias"];
-  acc_bias_cov = fsSettings["initial_covariance_acc_bias"];
-
-  double extrinsic_rotation_cov, extrinsic_translation_cov;
-  extrinsic_rotation_cov = fsSettings["initial_covariance_extrin_rot"];   
-  extrinsic_translation_cov = fsSettings["initial_covariance_extrin_trans"];
-
-  // Imu instrinsics
-  calib_imu = (static_cast<int>(fsSettings["calib_imu_instrinsic"]) ? true : false);
-  // TODO: read values from config files
-  state_server.Ma = Matrix3d::Identity();
-  state_server.Tg = Matrix3d::Identity();
-  state_server.As = Matrix3d::Zero();
-  state_server.M1 << state_server.Ma(1,0),
-      state_server.Ma(2,0),
-      state_server.Ma(2,1);
-  state_server.M2 << state_server.Ma(0,0),
-      state_server.Ma(1,1),
-      state_server.Ma(2,2);
-  state_server.T1 << state_server.Tg(1,0),
-      state_server.Tg(2,0),
-      state_server.Tg(2,1);
-  state_server.T2 << state_server.Tg(0,0),
-      state_server.Tg(1,1),
-      state_server.Tg(2,2);
-  state_server.T3 << state_server.Tg(0,1),
-      state_server.Tg(0,2),
-      state_server.Tg(1,2);
-  state_server.A1 << state_server.As(1,0),
-      state_server.As(2,0),
-      state_server.As(2,1);
-  state_server.A2 << state_server.As(0,0),
-      state_server.As(1,1),
-      state_server.As(2,2);
-  state_server.A3 << state_server.As(0,1),
-      state_server.As(0,2),
-      state_server.As(1,2);
-
-  // Calculate the dimension of legacy error state
-  if (calib_imu)
-      LEG_DIM = 46;
-  else
-      LEG_DIM = 22;
-
-  state_server.state_cov = MatrixXd::Zero(LEG_DIM, LEG_DIM);
-  for (int i = 0; i < 3; ++i) {
-      state_server.state_cov(i, i) = orientation_cov;
-  }
-  for (int i = 3; i < 6; ++i) {
-      state_server.state_cov(i, i) = velocity_cov;
-  }
-  for (int i = 6; i < 9; ++i) {
-      state_server.state_cov(i, i) = position_cov;
-  }
-  for (int i = 9; i < 12; ++i) {
-      state_server.state_cov(i, i) = gyro_bias_cov;
-  }
-  for (int i = 12; i < 15; ++i) {
-      state_server.state_cov(i, i) = acc_bias_cov;
-  }
-  if (estimate_extrin) {
-      for (int i = 15; i < 18; ++i) {
-          state_server.state_cov(i, i) = extrinsic_rotation_cov;
-      }
-      for (int i = 18; i < 21; ++i) {
-          state_server.state_cov(i, i) = extrinsic_translation_cov;
-      }
-  }
-  if (estimate_td) {
-      state_server.state_cov(21, 21) = 4e-6;
-  }
-  if (calib_imu) {
-      state_server.state_cov.block<24,24>(22,22) =
-          1e-4*MatrixXd::Identity(24, 24);
-  }
-
-  // Transformation offsets between the frames involved.
-  cv::Mat T_imu_cam;
-  fsSettings["T_cam_imu"] >> T_imu_cam;
-  cv::Matx33d R_imu_cam(T_imu_cam(cv::Rect(0,0,3,3)));
-  cv::Vec3d t_imu_cam = T_imu_cam(cv::Rect(3,0,1,3));
-  Matrix3d R_imu_cam_eigen;
-  Vector3d t_imu_cam_eigen;
-  cv2eigen(R_imu_cam, R_imu_cam_eigen);
-  cv2eigen(t_imu_cam, t_imu_cam_eigen);
-  Isometry3d T_imu_cam0;
-  T_imu_cam0.linear() = R_imu_cam_eigen;
-  T_imu_cam0.translation() = t_imu_cam_eigen;
-  Isometry3d T_cam0_imu = T_imu_cam0.inverse();
-
-  state_server.imu_state.R_imu_cam0 = T_cam0_imu.linear().transpose();
-  state_server.imu_state.t_cam0_imu = T_cam0_imu.translation() + 0.0*Vector3d::Random();
-
-  // Maximum number of camera states to be stored
-  sw_size = fsSettings["sw_size"];
-
-  // If applicate FEJ
-  if_FEJ_config = (static_cast<int>(fsSettings["if_FEJ"]) ? true : false);
-
-  // Least observation number for a valid feature
-  least_Obs_Num = fsSettings["least_observation_number"];
-
-  // Maximum feature distance for zero velocity detection
-  if_ZUPT_valid = (static_cast<int>(fsSettings["if_ZUPT_valid"]) ? true : false);
-  // Maximum feature distance for zero velocity detection
-  zupt_max_feature_dis = fsSettings["zupt_max_feature_dis"];
-
-  // Output files directory
-  fsSettings["output_dir"] >> output_dir;
-
-  // Static scene duration, in seconds
-  Static_Duration = fsSettings["static_duration"];
-  Static_Num = (int)(Static_Duration*features_rate);
-
-  // Grid distribution parameters
-  grid_rows = fsSettings["aug_grid_rows"];
-  grid_cols = fsSettings["aug_grid_cols"];
-  // Maximum number of features in state
-  max_features = fsSettings["max_features_in_one_grid"];
-  if (max_features<0) max_features=0;
-
-  // Resolution of camera
-  cam_resolution.resize(2);
-  cam_resolution[0] = fsSettings["resolution_width"];
-  cam_resolution[1] = fsSettings["resolution_height"];
-  // Camera calibration instrinsics
-  cam_intrinsics.resize(4);
-  cv::FileNode n_instrin = fsSettings["intrinsics"];
-  cam_intrinsics[0] = static_cast<double>(n_instrin["fx"]);
-  cam_intrinsics[1] = static_cast<double>(n_instrin["fy"]);
-  cam_intrinsics[2] = static_cast<double>(n_instrin["cx"]);
-  cam_intrinsics[3] = static_cast<double>(n_instrin["cy"]);
-  // Calculate boundary of feature measurement coordinate
-  double fx = cam_intrinsics[0];
-  double fy = cam_intrinsics[1];
-  double cx = cam_intrinsics[2];
-  double cy = cam_intrinsics[3];
-  int U = cam_resolution[0];
-  int V = cam_resolution[1];
-  x_min = -cx/fx;
-  y_min = -cy/fy;
-  x_max = (U-cx)/fx;
-  y_max = (V-cy)/fy;
-  // Calculate grid height and width
-  if (grid_rows*grid_cols!=0) {
-      grid_width = (x_max-x_min)/grid_cols;
-      grid_height = (y_max-y_min)/grid_rows;
-  }
-  else {
-      grid_width = (x_max-x_min);
-      grid_height = (y_max-y_min);
-  }
-  // Initialize the grid map
-  for (int i=0; i<grid_rows*grid_cols; ++i) {
-      grid_map[i] = vector<FeatureIDType>(0);
-  }
-
-  // Feature idp type
-  feature_idp_dim = fsSettings["feature_idp_dim"];
-  if (feature_idp_dim!=1 &&
-    feature_idp_dim!=3) {
-      LOG(INFO) << "Unknown type of feature idp type! Set as 3d idp." << std::endl;
-      feature_idp_dim = 3;
-  }
-
-  // If apply Schmidt EKF
-  use_schmidt = (static_cast<int>(fsSettings["use_schmidt"]) ? true : false);
-
-  // Print VIO setup
-  LOG(INFO) << "===========================================" << std::endl;
-  if (if_FEJ_config) {
-      LOG(INFO) << "using FEJ..." << std::endl;
-  } else {
-      LOG(INFO) << "not using FEJ..." << std::endl;
-  }
-  if (estimate_td) {
-      LOG(INFO) << "estimating td... initial td = " << state_server.td << std::endl;
-  } else {
-      LOG(INFO) << "not estimating td..." << std::endl;
-  }
-  if (estimate_extrin) {
-      LOG(INFO) << "estimating extrinsic..." << std::endl;
-  } else {
-      LOG(INFO) << "not estimating extrinsic..." << std::endl;
-  }
-  if (calib_imu) {
-      LOG(INFO) << "calibrating imu instrinsic online..." << std::endl;
-  } else {
-      LOG(INFO) << "not calibrating imu instrinsic online..." << std::endl;
-  }
-  if (0==max_features*grid_rows*grid_cols) {
-      LOG(INFO) << "Pure MSCKF..." << std::endl;
-  } else {
-      LOG(INFO) << "Hybrid MSCKF...Maximum number of feature in state is " << max_features*grid_rows*grid_cols << std::endl;
-      if (1==feature_idp_dim) {
-          LOG(INFO) << "features augmented into state will use 1d idp" << std::endl;
-      } else {
-          LOG(INFO) << "features augmented into state will use 3d idp" << std::endl;
-      }
-      if (use_schmidt) {
-          LOG(INFO) << "Applying Schmidt EKF" << std::endl;
-      }
-  }
-  LOG(INFO) << "===========================================" << std::endl;
-
-  return true;
-}
-
 bool HyVio::initializeWithParams(const std::shared_ptr<Parameters> &params) {
   //todo: 初始化参数
 
@@ -475,7 +206,7 @@ bool HyVio::initializeWithParams(const std::shared_ptr<Parameters> &params) {
   sw_size = params->sw_size;
 
   // If applicate FEJ
-  if_FEJ_config = params->if_FEJ;
+  if_first_estimates_jacobian_config = params->if_first_estimates_jacobian;
 
   // Least observation number for a valid feature
   least_Obs_Num = params->least_observation_number;
@@ -547,7 +278,7 @@ bool HyVio::initializeWithParams(const std::shared_ptr<Parameters> &params) {
 
   // Print VIO setup
   LOG(INFO) << "===========================================" << std::endl;
-  if (if_FEJ_config) {
+  if (if_first_estimates_jacobian_config) {
       LOG(INFO) << "using FEJ..." << std::endl;
   } else {
       LOG(INFO) << "not using FEJ..." << std::endl;
@@ -600,57 +331,8 @@ bool HyVio::initializeWithParams(const std::shared_ptr<Parameters> &params) {
   state_server.continuous_noise_cov.block<3, 3>(9, 9) =
     Matrix3d::Identity()*imu_acc_bias_noise;
 
-  // QXC: initialize if_FEJ flag
-  if_FEJ = false;
-
-  // QXC: initialize if_ZUPT flag
-  if_ZUPT = false;
-
-  // QXC: initialize bFirstFeatures flag
-  bFirstFeatures = false;
-
-  // QXC: initialize initializer
-  flexInitPtr.reset(new FlexibleInitializer(
-    zupt_max_feature_dis, Static_Num, state_server.td,
-    state_server.Ma, state_server.Tg, state_server.As,
-    sqrt(imu_acc_noise), sqrt(imu_acc_bias_noise),
-    sqrt(imu_gyro_noise), sqrt(imu_gyro_bias_noise),
-    state_server.imu_state.R_imu_cam0.transpose(),
-    state_server.imu_state.t_cam0_imu, imu_img_timeTh));
-
-  // Initialize the chi squared test table with confidence
-  // level 0.95.
-  for (int i = 1; i < 100; ++i) {
-    boost::math::chi_squared chi_squared_dist(i);
-    chi_squared_test_table[i] =
-      boost::math::quantile(chi_squared_dist, 0.05);
-  }
-
-  return true;
-}
-
-bool HyVio::initialize() {
-  if (!loadParameters()) {
-    return false;
-  }
-  // debug log
-  fImuState.open((output_dir+"msckf_2_state.txt").c_str(), ofstream::trunc);
-  fTakeOffStamp.open((output_dir+"msckf_2_takeoff.txt").c_str(), ofstream::trunc);
-
-  // Initialize state server
-  state_server.continuous_noise_cov =
-    Matrix<double, 12, 12>::Zero();
-  state_server.continuous_noise_cov.block<3, 3>(0, 0) =
-    Matrix3d::Identity()*imu_gyro_noise;
-  state_server.continuous_noise_cov.block<3, 3>(3, 3) =
-    Matrix3d::Identity()*imu_acc_noise;
-  state_server.continuous_noise_cov.block<3, 3>(6, 6) =
-    Matrix3d::Identity()*imu_gyro_bias_noise;
-  state_server.continuous_noise_cov.block<3, 3>(9, 9) =
-    Matrix3d::Identity()*imu_acc_bias_noise;
-
-  // QXC: initialize if_FEJ flag
-  if_FEJ = false;
+  // QXC: initialize if_first_estimates_jacobian flag
+  if_first_estimates_jacobian = false;
 
   // QXC: initialize if_ZUPT flag
   if_ZUPT = false;
@@ -734,11 +416,11 @@ bool HyVio::processFeatures(MonoCameraMeasurementPtr msg,
   // Delete old imu state if necessary.
   pruneImuStateBuffer();
 
-  // set if_FEJ flag if necessary
-  if ( if_FEJ_config
-      && !if_FEJ
+  // set if_first_estimates_jacobian flag if necessary
+  if ( if_first_estimates_jacobian_config
+      && !if_first_estimates_jacobian
       && state_server.imu_state.time-take_off_stamp>=0 ) {
-      if_FEJ = true;
+      if_first_estimates_jacobian = true;
   }
 
   // debug log: monitor imu state
@@ -1213,7 +895,7 @@ void HyVio::measurementJacobian_msckf(
 
   // Calculate the feature position wrt IMU in world frame
   // Vector3d p_bf_w = p_w-t_b_w;
-  Vector3d p_bf_w = (if_FEJ ? p_w-imu_state.position_FEJ : p_w-t_b_w);    // QXC: FEJ in measurement Jacobian is applied here
+  Vector3d p_bf_w = (if_first_estimates_jacobian ? p_w-imu_state.position_FEJ : p_w-t_b_w);    // QXC: FEJ in measurement Jacobian is applied here
 
   // Compute the Jacobians.
   Matrix<double, 2, 3> dz_dpc = Matrix<double, 2, 3>::Zero();
@@ -1367,7 +1049,7 @@ void HyVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
   const Vector3d& f_ca = feature.invParam;
   // 3D feature position in anchor camera frame
   Vector3d p_ca;
-  if (if_FEJ && !anch_is_nui) {
+  if (if_first_estimates_jacobian && !anch_is_nui) {
     p_ca = R_b2c*(R_w2ba*(feature.position_FEJ-imu_state_a.position_FEJ)-t_c_b);
   } else {
     p_ca(0) = f_ca(0)/f_ca(2);
@@ -1406,9 +1088,9 @@ void HyVio::measurementJacobian_ekf_3didp(const StateIDType& state_id,
 
   Matrix3d J_p = R_w2ck * R_w2ca.transpose();
 
-  Vector3d p_baf_w = ((if_FEJ&&!anch_is_nui) ?
+  Vector3d p_baf_w = ((if_first_estimates_jacobian&&!anch_is_nui) ?
     feature.position_FEJ-imu_state_a.position_FEJ : p_w-t_ba_w);
-  Vector3d p_bkf_w = (if_FEJ ?
+  Vector3d p_bkf_w = (if_first_estimates_jacobian ?
     feature.position_FEJ-imu_state_k.position_FEJ : p_w-t_bk_w);
 
   Matrix<double, 3, 6> J_xa = Matrix<double, 3, 6>::Zero();
@@ -1504,7 +1186,7 @@ void HyVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
 
   // 3D feature position in anchor camera frame
   Vector3d p_ca;
-  if (if_FEJ && !anch_is_nui) {
+  if (if_first_estimates_jacobian && !anch_is_nui) {
     p_ca = R_b2c*(R_w2ba*(feature.position_FEJ-imu_state_a.position_FEJ)-t_c_b);
   }else {
     p_ca(0) = f_an(0)/feature.invDepth;
@@ -1543,9 +1225,9 @@ void HyVio::measurementJacobian_ekf_1didp(const StateIDType& state_id,
 
   Vector3d J_d = R_w2ck * R_w2ca.transpose() * f_an;
 
-  Vector3d p_baf_w = ((if_FEJ&&!anch_is_nui) ?
+  Vector3d p_baf_w = ((if_first_estimates_jacobian&&!anch_is_nui) ?
     feature.position_FEJ-imu_state_a.position_FEJ : p_w-t_ba_w);
-  Vector3d p_bkf_w = (if_FEJ ?
+  Vector3d p_bkf_w = (if_first_estimates_jacobian ?
     feature.position_FEJ-imu_state_k.position_FEJ : p_w-t_bk_w);
 
   Matrix<double, 3, 6> J_xa = Matrix<double, 3, 6>::Zero();
@@ -3319,7 +3001,7 @@ void HyVio::updateFeatureCov_3didp(const FeatureIDType& feature_id,
 
   // Feature position in old camera frame.
   Vector3d p_old;
-  if (if_FEJ) {
+  if (if_first_estimates_jacobian) {
     p_old = R_b2c*(R_b2w_old.transpose()*(feature.position_FEJ-imu_state_old.position_FEJ)-t_c_b);
   } else
     p_old = R_c2w_old.inverse() * (p_w-t_c_w_old);
@@ -3341,7 +3023,7 @@ void HyVio::updateFeatureCov_3didp(const FeatureIDType& feature_id,
 
   // A commonly used vector
   Vector3d p_bf_w_old, p_bf_w_new;
-  if (if_FEJ) {
+  if (if_first_estimates_jacobian) {
     p_bf_w_old = feature.position_FEJ-imu_state_old.position_FEJ;
     p_bf_w_new = feature.position_FEJ-imu_state_new.position_FEJ;
   } else {
@@ -3479,7 +3161,7 @@ void HyVio::updateFeatureCov_1didp(const FeatureIDType& feature_id,
 
   // Feature position in old camera frame.
   Vector3d p_old;
-  if (if_FEJ) {
+  if (if_first_estimates_jacobian) {
     p_old = R_b2c*(R_b2w_old.transpose()*(feature.position_FEJ-imu_state_old.position_FEJ)-t_c_b);
   } else
     p_old = R_c2w_old.inverse() * (p_w-t_c_w_old);
@@ -3507,7 +3189,7 @@ void HyVio::updateFeatureCov_1didp(const FeatureIDType& feature_id,
 
   // A commonly used vector
   Vector3d p_bf_w_old, p_bf_w_new;
-  if (if_FEJ) {
+  if (if_first_estimates_jacobian) {
     p_bf_w_old = feature.position_FEJ-imu_state_old.position_FEJ;
     p_bf_w_new = feature.position_FEJ-imu_state_new.position_FEJ;
   } else {
@@ -3822,16 +3504,16 @@ void HyVio::calPhi(Eigen::MatrixXd& Phi, const double& dtime,
   Matrix3d TA = state_server.Tg*state_server.As;
 
   // Simple blocks
-  Vector3d vk = (if_FEJ ?
+  Vector3d vk = (if_first_estimates_jacobian ?
       state_server.imu_state_FEJ_old.velocity :
       state_server.imu_state_old.velocity);
-  Vector3d pk = (if_FEJ ?
+  Vector3d pk = (if_first_estimates_jacobian ?
       state_server.imu_state_FEJ_old.position :
       state_server.imu_state_old.position);
-  Vector3d vkp1 = (if_FEJ ?
+  Vector3d vkp1 = (if_first_estimates_jacobian ?
       state_server.imu_state_FEJ_now.velocity :
       state_server.imu_state.velocity);
-  Vector3d pkp1 = (if_FEJ ?
+  Vector3d pkp1 = (if_first_estimates_jacobian ?
       state_server.imu_state_FEJ_now.position :
       state_server.imu_state.position);
   Vector3d g_w = IMUState::gravity;

@@ -4,10 +4,10 @@
 common:
     output_dir: "/root/hyvio_results/"
     imu_rate: 200
-    image_rate: 20
-    imu_topic: "/imu0"
+    image_rate: 30
+    imu_topic: "/camera/camera/imu"
     vis_img_topic: "visualization_image"
-    img_topic: "/cam0/image_raw"
+    img_topic: "/camera/camera/color/image_raw"
     odom_topic: "odom"
     path_topic: "path"
     stable_feature_topic: "stable_feature_point_cloud"
@@ -16,28 +16,29 @@ common:
     child_frame_id: "odom"
 
     # switches
-    if_first_estimates_jacobian: true    # 0(false) or 1(true)
-    estimate_extrin: true    # 0(false) or 1(true)
-    estimate_td: true    # 0(false) or 1(true)
-    calib_imu_instrinsic: false    # 0(false) or 1(true)
-    camera_type: 1  # 0(realsense) or 1(euroc) or 2(mynteye)
+    if_first_estimates_jacobian: true
+    estimate_extrin: true 
+    estimate_td: false
+    calib_imu_instrinsic: false
+    camera_type: 0    # 0(realsense) or 1(euroc) or 2(mynteye)
+
 
 camera:
     # camera instrinsic
     camera_model: "pinhole"       # only support "pinhole"
     distortion_model: "radtan"    # only support "radtan" and "equidistant"
-    resolution_width: 752
-    resolution_height: 480
+    resolution_width: 1280
+    resolution_height: 720
     intrinsics:
-        fx: 458.654
-        fy: 457.296
-        cx: 367.215
-        cy: 248.375
+        fx: 911.065612792
+        fy: 910.350585937
+        cx: 657.713684082
+        cy: 370.291107177
     distortion_coeffs:
-        k1: -0.28340811
-        k2: 0.07395907
-        p1: 0.00019359
-        p2: 1.76187114e-05
+        k1: 0.0
+        k2: 0.0
+        p1: 0.0
+        p2: 0.0
 
     # imu-camera extrinsic, including spacial and temporal parameters
     T_cam_imu:
@@ -45,10 +46,10 @@ camera:
         cols: 4
         dt: d
         data:
-        [0.014865542981794,   0.999557249008346,  -0.025774436697440,   0.065222909535531,
-            -0.999880929698575,   0.014967213324719,   0.003756188357967,  -0.020706385492719,
-            0.004140296794224,   0.025715529947966,   0.999660727177902,  -0.008054602460030,
-                            0,                   0,                   0,   1.000000000000000]
+        [1.0,   0.0,   0.0,   -0.005520,
+            0.0,   1.0,   0.0,   0.0051,
+            0.0,   0.0,   1.0,   0.01173999,
+            0.0,   0.0,   0.0,   1.0]
     td: 0.0
 
 # TODO: if calibrate camera instrinsic online

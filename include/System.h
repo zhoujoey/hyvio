@@ -27,7 +27,7 @@ public:
     ~System();
 
     // Initialize the object.
-    bool initialize();
+    bool initialize(std::string &_config_file);
 
     typedef boost::shared_ptr<System> Ptr;
     typedef boost::shared_ptr<const System> ConstPtr;
@@ -98,7 +98,18 @@ private:
 
 #endif
 
-
+    std::string imu_topic = "/imu0";
+    std::string vis_img_topic = "visualization_image";
+    std::string img_topic = "/cam0/image_raw";
+    std::string odom_topic = "odom";
+    std::string path_topic = "path";
+    std::string stable_feature_topic = "stable_feature_point_cloud";
+    std::string active_feature_topic = "active_feature_point_cloud";
+    std::string fixed_frame_id = "world";
+    std::string child_frame_id = "odom";
+    double imu_rate = 200.0;
+    // Imu and image msg synchronized threshold.
+    double imu_img_timeTh;
 
     // Msgs to be published.
     odom_ros odom_msg;
@@ -108,9 +119,7 @@ private:
     // pcl_ros active_cloud_msg;
     path_ros path_msg;
 
-    // Frame id
-    std::string fixed_frame_id = "world";
-    std::string child_frame_id = "odom";
+
 
     // Pointer for image processer.
     ImageProcessorPtr ImgProcesser;
@@ -121,8 +130,7 @@ private:
     // Directory for config file.
     std::string config_file;
 
-    // Imu and image msg synchronized threshold.
-    double imu_img_timeTh;
+
 
     // IMU message buffer.
     std::vector<ImuData> imu_msg_buffer;
@@ -130,11 +138,6 @@ private:
     // Img message buffer.
     std::vector<ImageDataPtr> img_msg_buffer;
 
-    /*
-        * @brief loadParameters
-        *    Load parameters from the parameter server.
-        */
-    bool loadParameters();
 
     /*
         * @brief createRosIO

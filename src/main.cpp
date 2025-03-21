@@ -19,9 +19,16 @@ int main(int argc, char **argv) {
     
     // Create HYVIO system
     hyvio::System system(nh);
-    
+    std::string config_file;
+    nh.param<std::string>("config_file", config_file, "");
+    if (config_file == "") {
+        LOG(ERROR) << "can not load params, config_file is empty";
+        return -1;
+    } else {
+        LOG(INFO) << "param path is : " << config_file;
+    }
     // Initialize the system
-    if (!system.initialize()) {
+    if (!system.initialize(config_file)) {
         ROS_ERROR("Failed to initialize System!");
         return -1;
     }
@@ -36,7 +43,7 @@ int main(int argc, char **argv) {
     
     return 0;
 }
-#else 
+#else
 int main(int argc, char **argv) {
     // Initialize ROS node
     rclcpp::init(argc, argv);
@@ -52,9 +59,17 @@ int main(int argc, char **argv) {
     // Create HYVIO system
     hyvio::System system(nh);
     LOG(INFO) << "HYVIO system created3";
-    
+    std::string config_file;
+    nh->declare_parameter("config_file", "");
+    nh->get_parameter("config_file", config_file);
+    if (config_file == "") {
+        LOG(ERROR) << "can not load params, config_file is empty";
+        return -1;
+    } else {
+        LOG(INFO) << "param path is : " << config_file;
+    }
     // Initialize the system
-    if (!system.initialize()) {
+    if (!system.initialize(config_file)) {
         LOG(ERROR) << "Failed to initialize System!";
         return -1;
     }

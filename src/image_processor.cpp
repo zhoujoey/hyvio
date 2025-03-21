@@ -41,60 +41,6 @@ ImageProcessor::~ImageProcessor() {
 }
 
 
-bool ImageProcessor::loadParameters() {
-    cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
-    if (!fsSettings.isOpened()) {
-        LOG(INFO) << "config_file error: cannot open " << config_file << std::endl;
-        return false;
-    }
-
-    processor_config.fast_threshold = fsSettings["fast_threshold"];
-    processor_config.patch_size = fsSettings["patch_size"];
-    processor_config.pyramid_levels = fsSettings["pyramid_levels"];
-    processor_config.max_iteration = fsSettings["max_iteration"];
-    processor_config.track_precision = fsSettings["track_precision"];
-    processor_config.ransac_threshold = fsSettings["ransac_threshold"];
-    processor_config.max_features_num = fsSettings["max_features_num"];
-    processor_config.min_distance = fsSettings["min_distance"];
-    processor_config.flag_equalize = (static_cast<int>(fsSettings["flag_equalize"]) ? true : false);
-    processor_config.pub_frequency = fsSettings["pub_frequency"];
-    processor_config.img_rate = fsSettings["img_rate"];
-
-    // Output files directory
-    fsSettings["output_dir"] >> output_dir;
-
-    /*
-     * Camera calibration parameters
-     */
-    // Distortion model
-    fsSettings["distortion_model"] >> cam_distortion_model;
-    // Resolution of camera
-    cam_resolution[0] = fsSettings["resolution_width"];
-    cam_resolution[1] = fsSettings["resolution_height"];
-    // Camera calibration instrinsics
-    cv::FileNode n_instrin = fsSettings["intrinsics"];
-    cam_intrinsics[0] = static_cast<double>(n_instrin["fx"]);
-    cam_intrinsics[1] = static_cast<double>(n_instrin["fy"]);
-    cam_intrinsics[2] = static_cast<double>(n_instrin["cx"]);
-    cam_intrinsics[3] = static_cast<double>(n_instrin["cy"]);
-    // Distortion coefficient
-    cv::FileNode n_distort = fsSettings["distortion_coeffs"];
-    cam_distortion_coeffs[0] = static_cast<double>(n_distort["k1"]);
-    cam_distortion_coeffs[1] = static_cast<double>(n_distort["k2"]);
-    cam_distortion_coeffs[2] = static_cast<double>(n_distort["p1"]);
-    cam_distortion_coeffs[3] = static_cast<double>(n_distort["p2"]);
-    // Extrinsics between camera and IMU
-    cv::Mat T_imu_cam;
-    fsSettings["T_cam_imu"] >> T_imu_cam;
-    cv::Matx33d R_imu_cam(T_imu_cam(cv::Rect(0,0,3,3)));      
-    cv::Vec3d t_imu_cam = T_imu_cam(cv::Rect(3,0,1,3));
-    R_cam_imu = R_imu_cam.t();
-    t_cam_imu = -R_imu_cam.t() * t_imu_cam;
-
-    return true;
-}
-
-
 bool ImageProcessor::initializeWithParams(const std::shared_ptr<Parameters> &params) {
     processor_config.fast_threshold = params->fast_threshold;
     processor_config.patch_size = params->patch_size;
@@ -106,7 +52,7 @@ bool ImageProcessor::initializeWithParams(const std::shared_ptr<Parameters> &par
     processor_config.min_distance = params->min_distance;
     processor_config.flag_equalize = params->flag_equalize;
     processor_config.pub_frequency = params->pub_frequency;
-    processor_config.img_rate = params->img_rate;
+    processor_config.image_rate = params->image_rate;
 
     // 输出配置
     output_dir = params->output_dir;
@@ -135,18 +81,6 @@ bool ImageProcessor::initializeWithParams(const std::shared_ptr<Parameters> &par
     // Convert Eigen vector to cv::Vec3d
     cv::Vec3d t_cam_imu_cv(params->t_cam_imu(0), params->t_cam_imu(1), params->t_cam_imu(2));
     t_cam_imu = t_cam_imu_cv;
-
-    // Initialize publish counter
-    pub_counter = 0;
-
-    // Initialize flag for first useful img msg
-    bFirstImg = false;
-
-    return true;
-}
-
-bool ImageProcessor::initialize() {
-    if (!loadParameters()) return false;
 
     // Initialize publish counter
     pub_counter = 0;

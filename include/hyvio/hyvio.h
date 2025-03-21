@@ -51,7 +51,6 @@ class HyVio {
     /*
      * @brief initialize Initialize the VIO.
      */
-    bool initialize();
     bool initializeWithParams(const std::shared_ptr<Parameters> &params);
     /*
      * @brief reset Resets the VIO to initial status.
@@ -142,12 +141,6 @@ class HyVio {
       std::map<StateIDType, std::vector<FeatureIDType>> nui_features;
     };
 
-
-    /*
-     * @brief loadParameters
-     *    Load parameters from the parameter server.
-     */
-    bool loadParameters();
 
     // Filter related functions
     // Propogate the state
@@ -269,10 +262,10 @@ class HyVio {
     double take_off_stamp;
 
     // receive config flag for if applicate FEJ, added by QXC
-    bool if_FEJ_config;
+    bool if_first_estimates_jacobian_config;
 
     // If applicate FEJ, added by QXC
-    bool if_FEJ;
+    bool if_first_estimates_jacobian;
 
     // least observation number for a valid feature, added by QXC
     int least_Obs_Num;

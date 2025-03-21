@@ -46,8 +46,6 @@ public:
   ~ImageProcessor();
 
   // Initialize the object.
-  bool initialize();
-
   bool initializeWithParams(const std::shared_ptr<Parameters> &params);
   /*
    * @brief processImage
@@ -87,7 +85,7 @@ private:
     int min_distance;
     bool flag_equalize;
 
-    int img_rate;
+    int image_rate;
     int pub_frequency;
   };
 
@@ -96,11 +94,6 @@ private:
    */
   typedef unsigned long long int FeatureIDType;
 
-  /*
-   * @brief loadParameters
-   *    Load parameters from the parameter server.
-   */
-  bool loadParameters();
 
   /*
    * @brief integrateImuData Integrates the IMU gyro readings

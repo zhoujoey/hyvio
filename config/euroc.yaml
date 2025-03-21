@@ -4,11 +4,12 @@
 output_dir: "/root/hyvio_results/"
 
 # switches
-if_FEJ: 1    # 0(false) or 1(true)
+if_first_estimates_jacobian: 1    # 0(false) or 1(true)
 estimate_extrin: 1    # 0(false) or 1(true)
 estimate_td: 1    # 0(false) or 1(true)
 calib_imu_instrinsic: 0    # 0(false) or 1(true)
-
+imu_rate: 200.0
+image_rate: 20.0
 # camera instrinsic
 camera_model: "pinhole"       # only support "pinhole"
 distortion_model: "radtan"    # only support "radtan" and "equidistant"
@@ -93,10 +94,6 @@ zupt_noise_q: 3.4e-2
 
 # static initialization setting
 static_duration: 1.0
-
-# measurement rate
-imu_rate: 200
-img_rate: 20
 
 # augmented feature state settings
 max_features_in_one_grid: 1     # pure msckf if set to 0

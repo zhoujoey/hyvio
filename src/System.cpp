@@ -28,91 +28,43 @@ System::~System() {
 
 
 #ifdef ROS1
-bool System::loadParameters() {
-    // Configuration file path.
-    nh.getParam("config_file", config_file);
-
-    // Imu and img synchronized threshold.
-    double imu_rate;
-    nh.param<double>("imu_rate", imu_rate, 200.0);
-    imu_img_timeTh = 1/(2*imu_rate);
-
-    return true;
-}
 
 bool System::createRosIO() {
-    // Subscribe imu msg.
-    imu_sub = nh.subscribe("imu", 5000, &System::imuCallback, this);
-
-    // Subscribe image msg.
-    img_sub = nh.subscribe("cam0_image", 50, &System::imageCallback, this);
-
-    // Advertise processed image msg.
+    imu_sub = nh.subscribe(imu_topic, 5000, &System::imuCallback, this);
+    img_sub = nh.subscribe(img_topic, 50, &System::imageCallback, this);
     image_transport::ImageTransport it(nh);
-    vis_img_pub = it.advertise("visualization_image", 1);
+    vis_img_pub = it.advertise(vis_img_topic, 1);
+    odom_pub = std::make_shared<ros::Publisher>(nh.advertise<odom_ros>(odom_topic, 10));
+    stable_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>(stable_feature_topic, 1));
+    active_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>(active_feature_topic, 1));
+    path_pub = std::make_shared<ros::Publisher>(nh.advertise<path_ros>(path_topic, 10));
 
-    // Advertise odometry msg.
-    odom_pub = std::make_shared<ros::Publisher>(nh.advertise<odom_ros>("odom", 10));
-
-    // Advertise point cloud msg.
-    stable_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>("/stable_feature_point_cloud", 1));
-    active_feature_pub = std::make_shared<ros::Publisher>(nh.advertise<pcl_ros>("/active_feature_point_cloud", 1));
-
-    // Advertise path msg.
-    path_pub = std::make_shared<ros::Publisher>(nh.advertise<path_ros>("path", 10));
-
-    nh.param<string>("fixed_frame_id", fixed_frame_id, "world");
-    nh.param<string>("child_frame_id", child_frame_id, "odom");
     stable_feature_msg_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>());
     stable_feature_msg_ptr->header.frame_id = fixed_frame_id;
     stable_feature_msg_ptr->height = 1;
     return true;
 }
 #else
-// Load parameters from launch file
-bool System::loadParameters() {
-    // Configuration file path.
-    nh->declare_parameter("config_file", "");
-    nh->get_parameter("config_file", config_file);
-
-    // Imu and img synchronized threshold.
-    double imu_rate = 200.0;
-    nh->declare_parameter("imu_rate", 200.0);
-    nh->get_parameter("imu_rate", imu_rate);
-    imu_img_timeTh = 1/(2*imu_rate);
-
-    return true;
-}
 
 bool System::createRosIO() {
-    // Subscribe imu msg.
-    auto sensor_qos = rclcpp::QoS(200000);
-    imu_sub = nh->create_subscription<imu_ros>("/imu0", sensor_qos,
-            [this](const imu_ros_ptr msg) { imuCallback(msg); } 
+    auto sensor_qos = rclcpp::SensorDataQoS();
+    imu_sub = nh->create_subscription<imu_ros>(
+        imu_topic, 
+        sensor_qos,
+        [this](const imu_ros_ptr msg) { imuCallback(msg); }
     );
-
-    // Subscribe image msg.
-    img_sub = nh->create_subscription<image_ros>("/cam0/image_raw", sensor_qos,
-            [this](const image_ros_ptr msg) { imageCallback(msg); } 
+    
+    img_sub = nh->create_subscription<image_ros>(
+        img_topic, 
+        sensor_qos,
+        [this](const image_ros_ptr msg) { imageCallback(msg); }
     );
-
-    // Advertise processed image msg.
     image_transport::ImageTransport it(nh);
-    vis_img_pub = it.advertise("visualization_image", 1);
-
-    // Advertise odometry msg.
-    odom_pub = nh->create_publisher<odom_ros>("odom", 10);
-
-    // Advertise point cloud msg.
-    stable_feature_pub = nh->create_publisher<pcl_ros>("stable_feature_point_cloud", 1);
-    active_feature_pub = nh->create_publisher<pcl_ros>("active_feature_point_cloud", 1);
-
-    // Advertise path msg.
-    path_pub = nh->create_publisher<path_ros>("path", 10);
-    nh->declare_parameter("fixed_frame_id", "world");
-    nh->get_parameter("fixed_frame_id", fixed_frame_id);
-    nh->declare_parameter("child_frame_id", "robot");
-    nh->get_parameter("child_frame_id", child_frame_id);
+    vis_img_pub = it.advertise(vis_img_topic, 1);
+    odom_pub = nh->create_publisher<odom_ros>(odom_topic, 10);
+    stable_feature_pub = nh->create_publisher<pcl_ros>(stable_feature_topic, 1);
+    active_feature_pub = nh->create_publisher<pcl_ros>(active_feature_topic, 1);
+    path_pub = nh->create_publisher<path_ros>(path_topic, 10);
 
     return true;
 }
@@ -120,18 +72,26 @@ bool System::createRosIO() {
 
 
 // Initializing the system.
-bool System::initialize() {
-    // Load necessary parameters
-    if (!loadParameters()) {
-        return false;
-    }
-    std::string config_yaml = "/home/zhouwei/shared_files/ros_wrapper/install/hyvio/share/hyvio/config/euroc_params.yaml";
-    LOG(INFO) << "System: Finish loading ROS parameters...";
+bool System::initialize(std::string &_config_file) {
+    config_file = _config_file;
     auto parameters = std::make_shared<Parameters>();
-    if (!parameters->LoadParamsFromYAML(config_yaml)) {
+    if (!parameters->LoadParamsFromYAML(config_file)) {
         LOG(ERROR) << "LoadParamsFromYAML Failed!";
         return -1;
     }
+
+    // Get parameters from the loaded parameters object instead of ROS parameters
+    imu_rate = parameters->imu_rate;
+    imu_img_timeTh = 1/(2*imu_rate);
+    imu_topic = parameters->imu_topic;
+    vis_img_topic = parameters->vis_img_topic;
+    img_topic = parameters->img_topic;
+    odom_topic = parameters->odom_topic;
+    path_topic = parameters->path_topic;
+    stable_feature_topic = parameters->stable_feature_topic;
+    active_feature_topic = parameters->active_feature_topic;
+    fixed_frame_id = parameters->fixed_frame_id;
+    child_frame_id = parameters->child_frame_id;
     // Set pointers of image processer and estimator.
     ImgProcesser.reset(new ImageProcessor(config_file));
     Estimator.reset(new HyVio(config_file));

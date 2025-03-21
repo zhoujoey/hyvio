@@ -17,7 +17,7 @@ public:
     int min_distance;
     bool flag_equalize;
     int pub_frequency;
-    int img_rate;
+    int image_rate;
 
     // 输出配置
     std::string output_dir;
@@ -35,7 +35,6 @@ public:
 
 
     // Feature tracking parameters
-    double imu_rate;
     
     double position_std_threshold;
     double rotation_threshold;
@@ -67,13 +66,23 @@ public:
     int max_features_in_one_grid;
     bool calib_imu_instrinsic;
     int sw_size;
-    bool if_FEJ;
+    bool if_first_estimates_jacobian;
     int least_observation_number;
     bool if_ZUPT_valid;
     double zupt_max_feature_dis;
     double static_duration;
     int feature_idp_dim;
     bool use_schmidt;
+    double imu_rate;
+    std::string imu_topic;
+    std::string vis_img_topic;
+    std::string img_topic;
+    std::string odom_topic;
+    std::string path_topic;
+    std::string stable_feature_topic;
+    std::string active_feature_topic;
+    std::string fixed_frame_id;
+    std::string child_frame_id;
 
 public:
     Parameters()
@@ -94,87 +103,102 @@ public:
         // get params from yaml
         auto yaml = YAML::LoadFile(yaml_file);
         try {
-            fast_threshold = yaml["fast_threshold"].as<int>();
-            patch_size = yaml["patch_size"].as<int>();
-            pyramid_levels = yaml["pyramid_levels"].as<int>();
-            max_iteration = yaml["max_iteration"].as<int>();
-            track_precision = yaml["track_precision"].as<double>();
-            ransac_threshold = yaml["ransac_threshold"].as<double>();
+            // Load common parameters
+            output_dir = yaml["common"]["output_dir"].as<std::string>();
+            imu_rate = yaml["common"]["imu_rate"].as<double>();
+            image_rate = yaml["common"]["image_rate"].as<int>();
+            imu_topic = yaml["common"]["imu_topic"].as<std::string>();
+            vis_img_topic = yaml["common"]["vis_img_topic"].as<std::string>();
+            img_topic = yaml["common"]["img_topic"].as<std::string>();
+            odom_topic = yaml["common"]["odom_topic"].as<std::string>();
+            path_topic = yaml["common"]["path_topic"].as<std::string>();
+            stable_feature_topic = yaml["common"]["stable_feature_topic"].as<std::string>();
+            active_feature_topic = yaml["common"]["active_feature_topic"].as<std::string>();
+            fixed_frame_id = yaml["common"]["fixed_frame_id"].as<std::string>();
+            child_frame_id = yaml["common"]["child_frame_id"].as<std::string>();
 
-            max_features_num = yaml["max_features_num"].as<int>();
-            min_distance = yaml["min_distance"].as<int>();
-            flag_equalize = yaml["flag_equalize"].as<bool>();
+            if_first_estimates_jacobian = yaml["common"]["if_first_estimates_jacobian"].as<bool>();
+            estimate_extrin = yaml["common"]["estimate_extrin"].as<bool>();
+            estimate_td = yaml["common"]["estimate_td"].as<bool>();
+            calib_imu_instrinsic = yaml["common"]["calib_imu_instrinsic"].as<bool>();
 
-            pub_frequency = yaml["pub_frequency"].as<int>();
-            img_rate = yaml["img_rate"].as<int>();
+            // Camera parameters
+            camera_model = yaml["camera"]["camera_model"].as<std::string>();
+            distortion_model = yaml["camera"]["distortion_model"].as<std::string>();
+            cam_resolution[0] = yaml["camera"]["resolution_width"].as<int>();
+            cam_resolution[1] = yaml["camera"]["resolution_height"].as<int>();
 
-            // Output files directory
-            output_dir = yaml["output_dir"].as<std::string>();
+            cam_intrinsics[0] = yaml["camera"]["intrinsics"]["fx"].as<double>();
+            cam_intrinsics[1] = yaml["camera"]["intrinsics"]["fy"].as<double>();
+            cam_intrinsics[2] = yaml["camera"]["intrinsics"]["cx"].as<double>();
+            cam_intrinsics[3] = yaml["camera"]["intrinsics"]["cy"].as<double>();
 
-            /*
-            * Camera calibration parameters
-            */
-            // Distortion model
-            distortion_model = yaml["distortion_model"].as<std::string>();
-            camera_model = yaml["camera_model"].as<std::string>();
-            // Resolution of camera
-            cam_resolution[0] = yaml["resolution_width"].as<int>();
-            cam_resolution[1] = yaml["resolution_height"].as<int>();
-            // Camera calibration instrinsics
-            cam_intrinsics[0] = yaml["intrinsics"]["fx"].as<double>();
-            cam_intrinsics[1] = yaml["intrinsics"]["fy"].as<double>();
-            cam_intrinsics[2] = yaml["intrinsics"]["cx"].as<double>();
-            cam_intrinsics[3] = yaml["intrinsics"]["cy"].as<double>();
-            // Distortion coefficient
-            cam_distortion_coeffs[0] = yaml["distortion_coeffs"]["k1"].as<double>();
-            cam_distortion_coeffs[1] = yaml["distortion_coeffs"]["k2"].as<double>();
-            cam_distortion_coeffs[2] = yaml["distortion_coeffs"]["p1"].as<double>();
-            cam_distortion_coeffs[3] = yaml["distortion_coeffs"]["p2"].as<double>();
-            //Extrinsics between camera and IMU
-            const std::vector<double> T_data = yaml["T_cam_imu"]["data"].as<std::vector<double>>();
+            cam_distortion_coeffs[0] = yaml["camera"]["distortion_coeffs"]["k1"].as<double>();
+            cam_distortion_coeffs[1] = yaml["camera"]["distortion_coeffs"]["k2"].as<double>();
+            cam_distortion_coeffs[2] = yaml["camera"]["distortion_coeffs"]["p1"].as<double>();
+            cam_distortion_coeffs[3] = yaml["camera"]["distortion_coeffs"]["p2"].as<double>();
+
+            const std::vector<double> T_data = yaml["camera"]["T_cam_imu"]["data"].as<std::vector<double>>();
             R_cam_imu << T_data[0], T_data[1], T_data[2],
                          T_data[4], T_data[5], T_data[6],
                          T_data[8], T_data[9], T_data[10];
             t_cam_imu << T_data[3], T_data[7], T_data[11];
+            td = yaml["camera"]["td"].as<double>();
 
-            imu_rate = yaml["imu_rate"].as<double>();
-            position_std_threshold = yaml["position_std_threshold"].as<double>();
-            rotation_threshold = yaml["rotation_threshold"].as<double>();
-            translation_threshold = yaml["translation_threshold"].as<double>();
-            tracking_rate_threshold = yaml["tracking_rate_threshold"].as<double>();
-            max_track_len = yaml["max_track_len"].as<int>();
-            feature_translation_threshold = yaml["feature_translation_threshold"].as<double>();
-            reset_fej_threshold = yaml["reset_fej_threshold"].as<double>();
-            td = yaml["td"].as<double>();
-            estimate_td = yaml["estimate_td"].as<bool>();
-            estimate_extrin = yaml["estimate_extrin"].as<bool>();
-            noise_gyro = yaml["noise_gyro"].as<double>();
-            noise_acc = yaml["noise_acc"].as<double>();
-            noise_gyro_bias = yaml["noise_gyro_bias"].as<double>();
-            noise_acc_bias = yaml["noise_acc_bias"].as<double>();
-            noise_feature = yaml["noise_feature"].as<double>();
-            zupt_noise_v = yaml["zupt_noise_v"].as<double>();
-            zupt_noise_p = yaml["zupt_noise_p"].as<double>();
-            zupt_noise_q = yaml["zupt_noise_q"].as<double>();
-            initial_covariance_orientation = yaml["initial_covariance_orientation"].as<double>();
-            initial_covariance_position = yaml["initial_covariance_position"].as<double>();
-            initial_covariance_velocity = yaml["initial_covariance_velocity"].as<double>();
-            initial_covariance_gyro_bias = yaml["initial_covariance_gyro_bias"].as<double>();
-            initial_covariance_acc_bias = yaml["initial_covariance_acc_bias"].as<double>();
-            initial_covariance_extrin_rot = yaml["initial_covariance_extrin_rot"].as<double>();
-            initial_covariance_extrin_trans = yaml["initial_covariance_extrin_trans"].as<double>();
-            calib_imu_instrinsic = yaml["calib_imu_instrinsic"].as<bool>();
-            sw_size = yaml["sw_size"].as<int>();
-            if_FEJ = yaml["if_FEJ"].as<bool>();
-            least_observation_number = yaml["least_observation_number"].as<int>();
-            if_ZUPT_valid = yaml["if_ZUPT_valid"].as<bool>();
-            zupt_max_feature_dis = yaml["zupt_max_feature_dis"].as<double>();
-            static_duration = yaml["static_duration"].as<double>();
-            aug_grid_rows = yaml["aug_grid_rows"].as<int>();
-            aug_grid_cols = yaml["aug_grid_cols"].as<int>();
-            max_features_in_one_grid = yaml["max_features_in_one_grid"].as<int>();
-            feature_idp_dim = yaml["feature_idp_dim"].as<int>();
-            use_schmidt = yaml["use_schmidt"].as<bool>();
+            // Front-end parameters
+            pyramid_levels = yaml["front_end"]["pyramid_levels"].as<int>();
+            patch_size = yaml["front_end"]["patch_size"].as<int>();
+            fast_threshold = yaml["front_end"]["fast_threshold"].as<int>();
+            max_iteration = yaml["front_end"]["max_iteration"].as<int>();
+            track_precision = yaml["front_end"]["track_precision"].as<double>();
+            ransac_threshold = yaml["front_end"]["ransac_threshold"].as<double>();
+            max_features_num = yaml["front_end"]["max_features_num"].as<int>();
+            min_distance = yaml["front_end"]["min_distance"].as<int>();
+            flag_equalize = yaml["front_end"]["flag_equalize"].as<bool>();
+            pub_frequency = yaml["front_end"]["pub_frequency"].as<int>();
+
+            // Back-end parameters
+            sw_size = yaml["back_end"]["sw_size"].as<int>();
+
+            position_std_threshold = yaml["back_end"]["position_std_threshold"].as<double>();
+            rotation_threshold = yaml["back_end"]["rotation_threshold"].as<double>();
+            translation_threshold = yaml["back_end"]["translation_threshold"].as<double>();
+            tracking_rate_threshold = yaml["back_end"]["tracking_rate_threshold"].as<double>();
+
+            least_observation_number = yaml["back_end"]["least_observation_number"].as<int>();
+            max_track_len = yaml["back_end"]["max_track_len"].as<int>();
+            feature_translation_threshold = yaml["back_end"]["feature_translation_threshold"].as<double>();
+
+            noise_gyro = yaml["back_end"]["noise_gyro"].as<double>();
+            noise_acc = yaml["back_end"]["noise_acc"].as<double>();
+            noise_gyro_bias = yaml["back_end"]["noise_gyro_bias"].as<double>();
+            noise_acc_bias = yaml["back_end"]["noise_acc_bias"].as<double>();
+            noise_feature = yaml["back_end"]["noise_feature"].as<double>();
+            
+            initial_covariance_orientation = yaml["back_end"]["initial_covariance_orientation"].as<double>();
+            initial_covariance_velocity = yaml["back_end"]["initial_covariance_velocity"].as<double>();
+            initial_covariance_position = yaml["back_end"]["initial_covariance_position"].as<double>();
+            initial_covariance_gyro_bias = yaml["back_end"]["initial_covariance_gyro_bias"].as<double>();
+            initial_covariance_acc_bias = yaml["back_end"]["initial_covariance_acc_bias"].as<double>();
+            initial_covariance_extrin_rot = yaml["back_end"]["initial_covariance_extrin_rot"].as<double>();
+            initial_covariance_extrin_trans = yaml["back_end"]["initial_covariance_extrin_trans"].as<double>();
+
+            reset_fej_threshold = yaml["back_end"]["reset_fej_threshold"].as<double>();
+
+            if_ZUPT_valid = yaml["back_end"]["if_ZUPT_valid"].as<bool>();
+            zupt_max_feature_dis = yaml["back_end"]["zupt_max_feature_dis"].as<double>();
+            zupt_noise_v = yaml["back_end"]["zupt_noise_v"].as<double>();
+            zupt_noise_p = yaml["back_end"]["zupt_noise_p"].as<double>();
+            zupt_noise_q = yaml["back_end"]["zupt_noise_q"].as<double>();
+            
+            static_duration = yaml["back_end"]["static_duration"].as<double>();
+
+            max_features_in_one_grid = yaml["back_end"]["max_features_in_one_grid"].as<int>();
+            aug_grid_rows = yaml["back_end"]["aug_grid_rows"].as<int>();
+            aug_grid_cols = yaml["back_end"]["aug_grid_cols"].as<int>();
+            feature_idp_dim = yaml["back_end"]["feature_idp_dim"].as<int>();
+
+            use_schmidt = yaml["back_end"]["use_schmidt"].as<bool>();
 
         } catch (...) {
             LOG(ERROR) << "Bad conversion in loading yaml config";

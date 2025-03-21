@@ -7,13 +7,12 @@ import os
 
 def generate_launch_description():
     # Declare arguments
-    fixed_frame_id_arg = DeclareLaunchArgument(
-        'fixed_frame_id',
-        default_value='world'
-    )
-
-    # Get package share directory
-    pkg_dir = get_package_share_directory('hyvio')
+    default_config_path = os.path.join(get_package_share_directory('hyvio'), 'config/euroc_params.yaml')
+    if not os.path.exists(default_config_path):
+        print(f"Config file {default_config_path} does not exist")
+        default_config_path = os.path.join(get_package_share_directory('hyvio'), "config", 'euroc_params.yaml')
+    config_path = LaunchConfiguration('config_path', default=default_config_path)
+    rviz_config = os.path.join(get_package_share_directory('hyvio'), 'rviz', 'vio_ros2.rviz')
     
     # Create nodes
     vio_node = Node(
@@ -22,14 +21,8 @@ def generate_launch_description():
         name='vio',
         output='screen',
         parameters=[{
-            'config_file': os.path.join(pkg_dir, 'config/euroc.yaml'),
-            'fixed_frame_id': LaunchConfiguration('fixed_frame_id'),
-            'child_frame_id': 'odom'
+            'config_file': config_path
         }],
-        # remappings=[
-        #     ('imu', '/imu0'),
-        #     ('cam0_image', '/cam0/image_raw')
-        # ]
     )
 
     rviz_node = Node(
@@ -37,11 +30,10 @@ def generate_launch_description():
         executable='rviz2',
         name='visualization',
         output='log',
-        arguments=['-d', os.path.join(pkg_dir, 'rviz/vio_ros2.rviz')]
+        arguments=['-d', rviz_config]
     )
 
     return LaunchDescription([
-        fixed_frame_id_arg,
         vio_node,
         rviz_node
     ])
